@@ -272,7 +272,8 @@ def build_and_solve(students: List[Dict],
                     default_maxcap: int,
                     caps_override_csv: Optional[str],
                     time_limit_s: float,
-                    num_workers: int) -> Tuple[pd.DataFrame, pd.DataFrame, str]:
+                    num_workers: int,
+                    extra_total_limit: Optional[int] = None) -> Tuple[pd.DataFrame, pd.DataFrame, str]:
     # Demand order helps with stable post-processing
     demand = Counter()
     for s in students:
@@ -361,6 +362,9 @@ def build_and_solve(students: List[Dict],
     # Rooms per slot
     for s in S_idx:
         model.Add(sum(n[(t,s)] for t in T_idx) <= rooms_per_slot + extra[s])
+    # Optional global cap on total extras across all slots
+    if extra_total_limit is not None and int(extra_total_limit) >= 0:
+        model.Add(sum(extra[s] for s in S_idx) <= int(extra_total_limit))
 
     # Objective
     W1 = 10**6
@@ -560,6 +564,8 @@ def main():
     ap.add_argument("--group", default=None, help="Optional selection group filter for new Excel format (e.g., 'a').")
     ap.add_argument("--time-limit", type=float, default=60.0, help="Solver time limit in seconds (default: 60)")
     ap.add_argument("--workers", type=int, default=8, help="Number of solver workers (default: 8)")
+    ap.add_argument("--extra-total", type=int, default=None,
+                    help="Optional global limit on total extra rooms across all slots (e.g., with extra-per-slot=1 and extra-total=2, at most two slots get +1)")
     args = ap.parse_args()
 
     students, subjects = read_students_xlsx(args.input, target_group=args.group)
@@ -573,7 +579,8 @@ def main():
         default_maxcap=args.maxcap,
         caps_override_csv=args.caps_csv,
         time_limit_s=args.time_limit,
-        num_workers=args.workers
+        num_workers=args.workers,
+        extra_total_limit=args.extra_total
     )
 
     out = Path(args.output_dir)

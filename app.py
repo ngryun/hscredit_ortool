@@ -167,6 +167,7 @@ def index():
                 <label class=\"block text-sm font-medium text-stone-700 mb-1\">엑셀 파일 (.xlsx)</label>
                 <input class=\"block w-full text-sm file:mr-4 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-sage-100 file:text-sage-800 hover:file:bg-sage-200 border border-stone-300 rounded-lg p-2 bg-white\" type=\"file\" name=\"xlsx\" accept=\".xlsx\" required />
               </div>
+              
               <div id=\"group-row\" class=\"mb-4 hidden\"> 
                 <label class=\"block text-sm font-medium text-stone-700 mb-1\">선택그룹</label>
                 <select id=\"group-select\" name=\"group\" class=\"w-full rounded-lg border border-stone-300 p-2 bg-white\"></select>
@@ -175,7 +176,7 @@ def index():
               
               <div class=\"grid grid-cols-1 md:grid-cols-3 gap-3\">
                 <div>
-                  <label class=\"block text-sm text-stone-700 mb-1\">slots</label>
+                  <label class=\"block text-sm text-stone-700 mb-1\">선택수</label>
                   <input class=\"w-full rounded-lg border border-stone-300 p-2 focus:outline-none focus:ring-2 focus:ring-sage-300\" type=\"number\" name=\"slots\" min=\"1\" value=\"4\" />
                 </div>
                 <div>
@@ -187,12 +188,16 @@ def index():
                   <input class=\"w-full rounded-lg border border-stone-300 p-2 focus:outline-none focus:ring-2 focus:ring-sage-300\" type=\"number\" name=\"extra\" min=\"0\" value=\"1\" />
                 </div>
                 <div>
-                  <label class=\"block text-sm text-stone-700 mb-1\">cap</label>
+                  <label class=\"block text-sm text-stone-700 mb-1\">교실정원</label>
                   <input class=\"w-full rounded-lg border border-stone-300 p-2 focus:outline-none focus:ring-2 focus:ring-sage-300\" type=\"number\" name=\"cap\" min=\"1\" value=\"28\" />
                 </div>
                 <div>
-                  <label class=\"block text-sm text-stone-700 mb-1\">maxcap</label>
+                  <label class=\"block text-sm text-stone-700 mb-1\">교실최대정원</label>
                   <input class=\"w-full rounded-lg border border-stone-300 p-2 focus:outline-none focus:ring-2 focus:ring-sage-300\" type=\"number\" name=\"maxcap\" min=\"1\" value=\"30\" />
+                </div>
+                <div>
+                  <label class=\"block text-sm text-stone-700 mb-1\">all extra (total)</label>
+                  <input class=\"w-full rounded-lg border border-stone-300 p-2 focus:outline-none focus:ring-2 focus:ring-sage-300\" type=\"number\" name=\"extra_total\" min=\"0\" placeholder=\"무제한이면 비워두기\" />
                 </div>
               </div>
               <div class=\"mt-5 flex items-center gap-3\">
@@ -566,7 +571,8 @@ def index():
 JOBS = {}  # job_id -> {"status": "PENDING|RUNNING|DONE|ERROR", "dir": Path, "error": str|None}
 
 async def run_optimizer(job_id: str, xlsx_path: Path, out_dir: Path,
-                        slots: int, rooms: int, extra: int, cap: int, maxcap: int, group: str | None = None):
+                        slots: int, rooms: int, extra: int, cap: int, maxcap: int, group: str | None = None,
+                        extra_total: int | None = None):
     async with sema:  # 동시 실행 개수 제한
         JOBS[job_id]["status"] = "RUNNING"
         cmd = [
@@ -583,6 +589,8 @@ async def run_optimizer(job_id: str, xlsx_path: Path, out_dir: Path,
         ]
         if group:
             cmd += ["--group", str(group)]
+        if extra_total is not None:
+            cmd += ["--extra-total", str(extra_total)]
         # 비동기 실행
         proc = await asyncio.create_subprocess_exec(
             *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
@@ -651,6 +659,7 @@ async def run(
     cap: int = Form(28),
     maxcap: int = Form(30),
     group: str | None = Form(None),
+    extra_total: str | None = Form(None),
 ):
     job_id = str(uuid.uuid4())
     job_dir = BASE / job_id; job_dir.mkdir(parents=True, exist_ok=True)
@@ -661,7 +670,13 @@ async def run(
 
     JOBS[job_id] = {"status": "PENDING", "dir": job_dir, "error": None}
     # 백그라운드 태스크 시작 (즉시 응답)
-    asyncio.create_task(run_optimizer(job_id, xlsx_path, out_dir, slots, rooms, extra, cap, maxcap, group))
+    et_val = None
+    try:
+        if extra_total is not None and str(extra_total).strip() != "":
+            et_val = int(str(extra_total).strip())
+    except Exception:
+        et_val = None
+    asyncio.create_task(run_optimizer(job_id, xlsx_path, out_dir, slots, rooms, extra, cap, maxcap, group, et_val))
 
     return {"job": job_id, "status_url": f"/jobs/{job_id}"}
 
