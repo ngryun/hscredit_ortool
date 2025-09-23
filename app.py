@@ -212,9 +212,9 @@ def index():
             <div id=\"status-note\" class=\"text-sm text-stone-500\">실행하면 여기에서 진행상황과 다운로드 링크가 표시됩니다.</div>
             <div id=\"job-info\" class=\"mt-2 text-sm text-stone-600 hidden\"></div>
             <div id=\"mascot\" class=\"mt-4 hidden flex justify-center items-center gap-4\">
-              <video src=\"/asset/beori2.mp4\" autoplay loop muted playsinline class=\"w-36 h-36 md:w-40 md:h-40 object-contain rounded-lg shadow-sm ring-1 ring-sage-200\"></video>
-              <video src=\"/asset/beori.mp4\" autoplay loop muted playsinline class=\"w-36 h-36 md:w-40 md:h-40 object-contain rounded-lg shadow-sm ring-1 ring-sage-200\"></video>
-              </div>
+              <video id=\"mascot-video\" src=\"/asset/beori2.mp4\" autoplay loop muted playsinline class=\"w-36 h-36 md:w-40 md:h-40 object-contain rounded-lg shadow-sm ring-1 ring-sage-200\"></video>
+              <img id=\"mascot-done\" src=\"/asset/beori2_done.png\" onerror=\"this.onerror=null; this.src='/asset/beori_done2.png';\" alt=\"done\" class=\"hidden w-36 h-36 md:w-40 md:h-40 object-contain rounded-lg shadow-sm ring-1 ring-sage-200\" />
+            </div>
               <div id=\"downloads\" class=\"mt-4 space-x-2 hidden\"></div>
             <div id=\"pivot-wrap\" class=\"mt-6 hidden overflow-x-auto\">
               <table id=\"pivot-table\" class=\"min-w-full text-sm\"></table>
@@ -243,6 +243,8 @@ def index():
         const groupRow = document.getElementById('group-row');
         const groupSel = document.getElementById('group-select');
         const mascot = document.getElementById('mascot');
+        const mascotVideo = document.getElementById('mascot-video');
+        const mascotDone = document.getElementById('mascot-done');
         // Preview UI is removed; provide safe dummies for legacy code paths
         const inspectWrap = {{ classList: {{ add: ()=>{{}}, remove: ()=>{{}} }} }};
         const inspectBody = {{ innerHTML: '' }};
@@ -481,6 +483,8 @@ def index():
               if (js.status === 'RUNNING') {{
                 setStatus('RUNNING');
                 if (mascot) mascot.classList.remove('hidden');
+                if (mascotVideo) mascotVideo.classList.remove('hidden');
+                if (mascotDone) mascotDone.classList.add('hidden');
                 if (js.progress) {{ lastProgress = js.progress; }}
                 if (runStartMs === null) {{
                   runStartMs = Date.now();
@@ -502,7 +506,9 @@ def index():
                 statusNote.textContent = `계산 중 · ${{secsNow}}s · 솔루션 ${{solsNow}}${{uaNow}}`;
               }} else if (js.status === 'DONE') {{
                 setStatus('DONE');
-                if (mascot) mascot.classList.add('hidden');
+                if (mascot) mascot.classList.remove('hidden');
+                if (mascotVideo) mascotVideo.classList.add('hidden');
+                if (mascotDone) mascotDone.classList.remove('hidden');
                 if (tickTimer) {{ clearInterval(tickTimer); tickTimer = null; }}
                 runStartMs = null; lastProgress = null;
                 if (js.summary && js.summary.total_unassigned !== undefined) {{
@@ -520,9 +526,11 @@ def index():
                 `;
                 if (js.pivot) {{ renderPivot(js.pivot); }} else {{ renderPivot(null); }}
                 submitBtn.disabled = false;
-              }} else if (js.status === 'ERROR') {{
+               }} else if (js.status === 'ERROR') {{
                 setStatus('ERROR', 'rose');
                 if (mascot) mascot.classList.add('hidden');
+                if (mascotVideo) mascotVideo.classList.add('hidden');
+                if (mascotDone) mascotDone.classList.add('hidden');
                 if (tickTimer) {{ clearInterval(tickTimer); tickTimer = null; }}
                 runStartMs = null; lastProgress = null;
                 statusNote.textContent = '오류가 발생했습니다.';
@@ -531,9 +539,11 @@ def index():
                 renderPivot(null);
                 clearInterval(pollTimer);
                 submitBtn.disabled = false;
-              }} else if (js.status === 'PENDING') {{
+               }} else if (js.status === 'PENDING') {{
                 setStatus('PENDING');
                 if (mascot) mascot.classList.add('hidden');
+                if (mascotVideo) mascotVideo.classList.add('hidden');
+                if (mascotDone) mascotDone.classList.add('hidden');
                 if (tickTimer) {{ clearInterval(tickTimer); tickTimer = null; }}
                 runStartMs = null; lastProgress = null;
                 statusNote.textContent = '대기 중...';
@@ -569,7 +579,7 @@ async def run_optimizer(job_id: str, xlsx_path: Path, out_dir: Path,
             "--cap", str(cap),
             "--maxcap", str(maxcap),
             "--time-limit", "90",
-            "--workers", "8"  # 머신 코어/워커 수에 맞춰 조정
+            "--workers", "2"  # 머신 코어/워커 수에 맞춰 조정
         ]
         if group:
             cmd += ["--group", str(group)]
