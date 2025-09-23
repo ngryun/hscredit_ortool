@@ -21,7 +21,7 @@ BASE = Path("data"); BASE.mkdir(exist_ok=True, parents=True)
 app.mount("/asset", StaticFiles(directory="asset"), name="asset")
 
 # ← 여기 숫자만 조절하면 동시 실행 개수 제한 가능 (예: 2~3)
-MAX_CONCURRENT = 8
+MAX_CONCURRENT = 2
 sema = asyncio.Semaphore(MAX_CONCURRENT)
 from fastapi.responses import HTMLResponse
 
@@ -578,7 +578,7 @@ async def run_optimizer(job_id: str, xlsx_path: Path, out_dir: Path,
             "--extra-rooms-per-slot", str(extra),
             "--cap", str(cap),
             "--maxcap", str(maxcap),
-            "--time-limit", "90",
+            "--time-limit", "120",
             "--workers", "2"  # 머신 코어/워커 수에 맞춰 조정
         ]
         if group:
