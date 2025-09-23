@@ -43,6 +43,14 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from typing import Dict, List, Tuple, Optional
 import pandas as pd
+import warnings
+
+# Silence harmless openpyxl default style warning for some workbooks
+warnings.filterwarnings(
+    "ignore",
+    category=UserWarning,
+    module=r"openpyxl\.styles\.stylesheet"
+)
 
 # OR-Tools
 from ortools.sat.python import cp_model
@@ -71,35 +79,187 @@ def load_caps_override(path: Optional[str]) -> Dict[str, Caps]:
     return subs
 
 
-def read_students_xlsx(xlsx_path: str) -> Tuple[List[Dict], List[str]]:
-    df = pd.read_excel(xlsx_path, sheet_name=0)
-    df.columns = [str(c).strip() for c in df.columns]
-    if len(df.columns) < 3:
-        raise ValueError("Expected at least 3 columns: 학번, 이름, and subject columns with 1/0")
-    student_id_col = df.columns[0]
-    student_name_col = df.columns[1]
-    subject_cols = [str(c).strip() for c in df.columns[2:]]
-    # Normalize subject names (trim/collapse spaces)
+def read_students_xlsx(xlsx_path: str, target_group: Optional[str] = None) -> Tuple[List[Dict], List[str]]:
+    """Read students + choices from Excel, supporting multiple formats.
+
+    Supported formats:
+    1) Wide (original):
+       - Row 1 header with columns: [학번, 이름, <subjects...>]
+       - Cells are 1/0 (or Y/N) for choices.
+
+    2) Grade-split header (new):
+        - Columns A,B,C = 1/2/3학년 학번 (5자리); pick highest non-zero among C,B,A per row.
+        - Row 2 = 학기, Row 3 = 선택그룹 (merged OK), Row 4 = 과목명, Row 5 = 고유번호(무시),
+         Row 6.. = 데이터; from column E onward are subject choice cells with 1 for chosen.
+       - Name may not be present; we use the ID as name placeholder.
+       - Optional: if target_group provided (e.g., 'a'), only include that group's subjects.
+    """
+
     def norm(s):
         return " ".join(str(s).split())
-    subject_cols = [norm(c) for c in subject_cols]
-    df = df.rename(columns={old: new for old, new in zip(df.columns[2:], subject_cols)})
-    students = []
-    for _, row in df.iterrows():
-        sid = str(row[student_id_col]).strip()
-        name = str(row[student_name_col]).strip()
-        choices = []
-        for subj in subject_cols:
-            val = row.get(subj, 0)
+
+    # Try reading with header to detect original format quickly
+    try:
+        df = pd.read_excel(xlsx_path, sheet_name=0)
+        df.columns = [str(c).strip() for c in df.columns]
+        looks_original = len(df.columns) >= 3 and (
+            any("학번" in c or c.lower() in {"id", "student_id"} for c in df.columns[:2]) or
+            any("이름" in c or c.lower() in {"name"} for c in df.columns[:2])
+        )
+    except Exception:
+        df = pd.DataFrame()
+        looks_original = False
+
+    if looks_original and not df.empty:
+        # Original wide format path
+        student_id_col = df.columns[0]
+        student_name_col = df.columns[1]
+        subject_cols = [str(c).strip() for c in df.columns[2:]]
+        subject_cols = [norm(c) for c in subject_cols]
+        df = df.rename(columns={old: new for old, new in zip(df.columns[2:], subject_cols)})
+        students = []
+        for _, row in df.iterrows():
+            sid = str(row[student_id_col]).strip()
+            name = str(row.get(student_name_col, "")).strip()
+            choices = []
+            for subj in subject_cols:
+                val = row.get(subj, 0)
+                chosen = False
+                try:
+                    chosen = int(val) == 1
+                except Exception:
+                    chosen = str(val).strip().upper() in {"1","Y","O","YES","TRUE"}
+                if chosen:
+                    choices.append(subj)
+            if sid or choices:
+                students.append({"student_id": sid, "name": name or sid, "choices": choices})
+        return students, subject_cols
+
+    # Fall back to the grade-split header format
+    df0 = pd.read_excel(xlsx_path, sheet_name=0, header=None)
+    # Expect at least 6 rows and 5+ columns (A..E)
+    if df0.shape[0] < 6 or df0.shape[1] < 5:
+        raise ValueError("Unsupported Excel layout: expected at least 6 rows and 5 columns for the new format")
+
+    # Column indices (0-based)
+    COL_A, COL_B, COL_C, COL_D, COL_E = 0, 1, 2, 3, 4
+    ROW_SEM, ROW_GRP, ROW_SUBJ, ROW_UNIQ, ROW_DATA_START = 1, 2, 3, 4, 5
+
+    # Subjects from row 4 (index 3), columns E..end
+    sem_row = df0.iloc[ROW_SEM, COL_E:]
+    grp_row = df0.iloc[ROW_GRP, COL_E:]
+    subj_row = df0.iloc[ROW_SUBJ, COL_E:]
+
+    subjects: List[Optional[str]] = []
+    groups: List[Optional[str]] = []
+    semesters: List[Optional[str]] = []
+    used = set()
+    for j, base in enumerate(subj_row):
+        if pd.isna(base):
+            subjects.append(None)
+            groups.append(None)
+            semesters.append(None)
+            continue
+        base_s = norm(base)
+        if not base_s:
+            subjects.append(None)
+            groups.append(None)
+            semesters.append(None)
+            continue
+        sem = sem_row.iloc[j] if j < len(sem_row) else None
+        grp = grp_row.iloc[j] if j < len(grp_row) else None
+        # forward-fill merged header cells
+        prev_sem = semesters[-1] if semesters else None
+        prev_grp = groups[-1] if groups else None
+        if (sem is None or (isinstance(sem, float) and math.isnan(sem)) or str(sem).strip() == ""):
+            sem = prev_sem
+        if (grp is None or (isinstance(grp, float) and math.isnan(grp)) or str(grp).strip() == ""):
+            grp = prev_grp
+        sem_s = str(sem).strip() if sem is not None and not pd.isna(sem) else ""
+        grp_s = str(grp).strip() if grp is not None and not pd.isna(grp) else ""
+        name = base_s
+        # Ensure uniqueness if duplicated subject names appear across groups/semesters
+        if name in used and (sem_s or grp_s):
+            tag = "-".join([p for p in [sem_s, grp_s] if p])
+            name = f"{base_s} [{tag}]"
+        k = 2
+        while name in used:
+            name = f"{base_s} ({k})"
+            k += 1
+        used.add(name)
+        subjects.append(name)
+        groups.append(grp_s)
+        semesters.append(sem_s)
+
+    # Build include mask by target_group
+    def _norm_lower(x: Optional[str]) -> str:
+        return " ".join(str(x).split()).lower() if x is not None else ""
+    tgt = _norm_lower(target_group) if target_group else None
+    include_col: List[bool] = []  # aligned with columns E..end
+    for j in range(len(subj_row)):
+        subj = subjects[j] if j < len(subjects) else None
+        if not subj:
+            include_col.append(False)
+            continue
+        if tgt is None:
+            include_col.append(True)
+        else:
+            include_col.append(_norm_lower(groups[j] if j < len(groups) else None) == tgt)
+
+    # Data rows start at row index 5
+    students: List[Dict] = []
+    for i in range(ROW_DATA_START, df0.shape[0]):
+        # Pick highest non-zero among C, B, A (3학년 > 2학년 > 1학년)
+        sid_val = None
+        for ci in (COL_C, COL_B, COL_A):
+            v = df0.iat[i, ci] if ci < df0.shape[1] else None
+            if v is None or (isinstance(v, float) and math.isnan(v)):
+                continue
+            try:
+                iv = int(v)
+            except Exception:
+                # sometimes stored as strings
+                try:
+                    iv = int(str(v).strip())
+                except Exception:
+                    continue
+            if iv != 0:
+                sid_val = iv
+                break
+        if sid_val is None:
+            # no valid id on this row; skip if no choices later
+            sid_str = ""
+        else:
+            sid_str = str(sid_val).zfill(5)
+
+        # Extract choices from E..end for this row
+        choices: List[str] = []
+        for j, col in enumerate(range(COL_E, df0.shape[1])):
+            subj = subjects[j] if j < len(subjects) else None
+            if not subj:
+                continue
+            if not include_col[j]:
+                continue
+            val = df0.iat[i, col]
             chosen = False
             try:
                 chosen = int(val) == 1
             except Exception:
-                chosen = str(val).strip().upper() in {"1","Y","O","YES","TRUE"}
+                chosen = str(val).strip() == "1"
             if chosen:
                 choices.append(subj)
-        students.append({"student_id": sid, "name": name, "choices": choices})
-    return students, subject_cols
+
+        if sid_str or choices:
+            students.append({
+                "student_id": sid_str,
+                # Name may be absent in this layout; use ID as placeholder
+                "name": sid_str or "",
+                "choices": choices,
+            })
+
+    # Filter out empty subject names from the final list
+    subjects_all = [s for s, inc in zip(subjects, include_col) if s and inc]
+    return students, subjects_all
 
 
 def build_and_solve(students: List[Dict],
@@ -369,11 +529,12 @@ def main():
     ap.add_argument("--cap", type=int, default=28, help="Default capacity per section (default: 28)")
     ap.add_argument("--maxcap", type=int, default=30, help="Default max capacity per section (default: 30)")
     ap.add_argument("--caps-csv", default=None, help="Optional CSV with per-subject cap/maxcap overrides (columns: subject,cap,maxcap)")
+    ap.add_argument("--group", default=None, help="Optional selection group filter for new Excel format (e.g., 'a').")
     ap.add_argument("--time-limit", type=float, default=60.0, help="Solver time limit in seconds (default: 60)")
     ap.add_argument("--workers", type=int, default=8, help="Number of solver workers (default: 8)")
     args = ap.parse_args()
 
-    students, subjects = read_students_xlsx(args.input)
+    students, subjects = read_students_xlsx(args.input, target_group=args.group)
     sections_df, assignments_df, report_text = build_and_solve(
         students=students,
         subjects_all=subjects,

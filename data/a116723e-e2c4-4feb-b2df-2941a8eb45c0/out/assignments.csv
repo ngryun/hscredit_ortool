@@ -1,0 +1,2376 @@
+student_id,name,subject,slot,section_label,status
+10101,10101,윤리와 사상,d,윤리와 사상_d_1,assigned
+10101,10101,매체 의사소통,,,unassigned
+10101,10101,화법과 언어,,,unassigned
+10101,10101,음악과 미디어,a,음악과 미디어_a_1,assigned
+10101,10101,인간과 심리,c,인간과 심리_c_1,assigned
+10101,10101,보건,,,unassigned
+10101,10101,현대사회와 윤리,,,unassigned
+10101,10101,기후변화와 환경생태,,,unassigned
+10101,10101,주제 탐구 독서,,,unassigned
+10101,10101,인간과 철학,,,unassigned
+10101,10101,생태와 환경,,,unassigned
+10101,10101,정치,,,unassigned
+10101,10101,윤리문제 탐구,,,unassigned
+10101,10101,과학의 역사와 문화,b,과학의 역사와 문화_b_1,assigned
+10101,10101,생명과학,,,unassigned
+10101,10101,독서 토론과 글쓰기,,,unassigned
+10101,10101,생물의 유전,,,unassigned
+10101,10101,인문학과 윤리,,,unassigned
+10101,10101,세포와 물질대사,,,unassigned
+10101,10101,마케팅과 광고,,,unassigned
+10101,10101,세계 문화와 영어,,,unassigned
+10101,10101,언어생활 탐구,,,unassigned
+10102,10102,사회문제 탐구,,,unassigned
+10102,10102,매체 의사소통,,,unassigned
+10102,10102,화법과 언어,a,화법과 언어_a_1,assigned
+10102,10102,인간과 심리,c,인간과 심리_c_1,assigned
+10102,10102,직무 의사소통,,,unassigned
+10102,10102,보건,,,unassigned
+10102,10102,미술과 매체,,,unassigned
+10102,10102,현대사회와 윤리,,,unassigned
+10102,10102,실생활 영어 회화,,,unassigned
+10102,10102,기후변화와 환경생태,,,unassigned
+10102,10102,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10102,10102,생태와 환경,,,unassigned
+10102,10102,윤리문제 탐구,,,unassigned
+10102,10102,생명과학,,,unassigned
+10102,10102,교육의 이해,d,교육의 이해_d_1,assigned
+10102,10102,미술 창작,,,unassigned
+10102,10102,생물의 유전,,,unassigned
+10102,10102,데이터 과학,,,unassigned
+10102,10102,세포와 물질대사,,,unassigned
+10102,10102,화학,,,unassigned
+10102,10102,물질과 에너지,,,unassigned
+10102,10102,화학 반응의 세계,,,unassigned
+10103,10103,사회문제 탐구,,,unassigned
+10103,10103,화법과 언어,,,unassigned
+10103,10103,영어Ⅱ,,,unassigned
+10103,10103,음악과 미디어,a,음악과 미디어_a_1,assigned
+10103,10103,인간과 심리,,,unassigned
+10103,10103,확률과 통계,,,unassigned
+10103,10103,보건,c,보건_c_1,assigned
+10103,10103,실생활 영어 회화,,,unassigned
+10103,10103,기후변화와 환경생태,,,unassigned
+10103,10103,인간과 철학,,,unassigned
+10103,10103,생태와 환경,,,unassigned
+10103,10103,과학의 역사와 문화,,,unassigned
+10103,10103,생명과학,d,생명과학_d_1,assigned
+10103,10103,생물의 유전,,,unassigned
+10103,10103,인문학과 윤리,,,unassigned
+10103,10103,세포와 물질대사,,,unassigned
+10103,10103,화학,,,unassigned
+10103,10103,물질과 에너지,,,unassigned
+10103,10103,화학 반응의 세계,,,unassigned
+10103,10103,기하,,,unassigned
+10103,10103,인공지능 수학,,,unassigned
+10103,10103,미적분Ⅱ,b,미적분Ⅱ_b_1,assigned
+10104,10104,사회문제 탐구,,,unassigned
+10104,10104,윤리와 사상,d,윤리와 사상_d_1,assigned
+10104,10104,화법과 언어,b,화법과 언어_b_1,assigned
+10104,10104,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10104,10104,인간과 심리,c,인간과 심리_c_1,assigned
+10104,10104,확률과 통계,,,unassigned
+10104,10104,직무 의사소통,,,unassigned
+10104,10104,사회와 문화,,,unassigned
+10104,10104,현대사회와 윤리,,,unassigned
+10104,10104,주제 탐구 독서,,,unassigned
+10104,10104,법과 사회,,,unassigned
+10104,10104,직무 영어,,,unassigned
+10104,10104,인간과 철학,,,unassigned
+10104,10104,생태와 환경,,,unassigned
+10104,10104,정치,,,unassigned
+10104,10104,윤리문제 탐구,,,unassigned
+10104,10104,문학과 영상,,,unassigned
+10104,10104,인간과 경제활동,,,unassigned
+10104,10104,독서 토론과 글쓰기,,,unassigned
+10104,10104,인문학과 윤리,,,unassigned
+10104,10104,세계시민과 지리,,,unassigned
+10104,10104,경제 수학,,,unassigned
+10106,10106,사회문제 탐구,,,unassigned
+10106,10106,윤리와 사상,d,윤리와 사상_d_1,assigned
+10106,10106,매체 의사소통,b,매체 의사소통_b_1,assigned
+10106,10106,음악과 미디어,,,unassigned
+10106,10106,인간과 심리,,,unassigned
+10106,10106,직무 의사소통,,,unassigned
+10106,10106,사회와 문화,,,unassigned
+10106,10106,보건,a,보건_a_1,assigned
+10106,10106,미술과 매체,,,unassigned
+10106,10106,일본어,,,unassigned
+10106,10106,기후변화와 환경생태,,,unassigned
+10106,10106,법과 사회,,,unassigned
+10106,10106,생태와 환경,c,생태와 환경_c_1,assigned
+10106,10106,정치,,,unassigned
+10106,10106,윤리문제 탐구,,,unassigned
+10106,10106,문학과 영상,,,unassigned
+10106,10106,생명과학,,,unassigned
+10106,10106,독서 토론과 글쓰기,,,unassigned
+10106,10106,한국지리 탐구,,,unassigned
+10106,10106,세계사,,,unassigned
+10106,10106,역사로 탐구하는 현대 세계,,,unassigned
+10106,10106,동아시아 역사 기행,,,unassigned
+10108,10108,윤리와 사상,d,윤리와 사상_d_1,assigned
+10108,10108,매체 의사소통,,,unassigned
+10108,10108,화법과 언어,,,unassigned
+10108,10108,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10108,10108,음악과 미디어,,,unassigned
+10108,10108,인간과 심리,,,unassigned
+10108,10108,미술과 매체,,,unassigned
+10108,10108,현대사회와 윤리,,,unassigned
+10108,10108,주제 탐구 독서,,,unassigned
+10108,10108,직무 영어,,,unassigned
+10108,10108,인간과 철학,,,unassigned
+10108,10108,생태와 환경,c,생태와 환경_c_1,assigned
+10108,10108,정치,,,unassigned
+10108,10108,윤리문제 탐구,,,unassigned
+10108,10108,인문학과 윤리,,,unassigned
+10108,10108,미디어 영어,,,unassigned
+10108,10108,세계사,,,unassigned
+10108,10108,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10108,10108,마케팅과 광고,,,unassigned
+10108,10108,세계 문화와 영어,,,unassigned
+10108,10108,동아시아 역사 기행,,,unassigned
+10108,10108,직무 수학,,,unassigned
+10109,10109,사회문제 탐구,,,unassigned
+10109,10109,화법과 언어,,,unassigned
+10109,10109,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10109,10109,확률과 통계,,,unassigned
+10109,10109,미술과 매체,d,미술과 매체_d_1,assigned
+10109,10109,기후변화와 환경생태,,,unassigned
+10109,10109,생태와 환경,,,unassigned
+10109,10109,윤리문제 탐구,,,unassigned
+10109,10109,과학의 역사와 문화,,,unassigned
+10109,10109,한국지리 탐구,,,unassigned
+10109,10109,미술 창작,,,unassigned
+10109,10109,화학,,,unassigned
+10109,10109,물질과 에너지,b,물질과 에너지_b_1,assigned
+10109,10109,화학 반응의 세계,,,unassigned
+10109,10109,수학과 문화,,,unassigned
+10109,10109,기하,,,unassigned
+10109,10109,물리학,,,unassigned
+10109,10109,지구과학,,,unassigned
+10109,10109,미적분Ⅱ,c,미적분Ⅱ_c_1,assigned
+10109,10109,도시의 미래 탐구,,,unassigned
+10109,10109,지구시스템과학,,,unassigned
+10109,10109,세계 문화와 영어 [3-2-D],,,unassigned
+10110,10110,사회문제 탐구,,,unassigned
+10110,10110,윤리와 사상,d,윤리와 사상_d_1,assigned
+10110,10110,화법과 언어,,,unassigned
+10110,10110,음악과 미디어,a,음악과 미디어_a_1,assigned
+10110,10110,확률과 통계,,,unassigned
+10110,10110,사회와 문화,,,unassigned
+10110,10110,현대사회와 윤리,,,unassigned
+10110,10110,기후변화와 환경생태,,,unassigned
+10110,10110,법과 사회,,,unassigned
+10110,10110,직무 영어,,,unassigned
+10110,10110,생태와 환경,c,생태와 환경_c_1,assigned
+10110,10110,정치,,,unassigned
+10110,10110,윤리문제 탐구,,,unassigned
+10110,10110,정보,,,unassigned
+10110,10110,인간과 경제활동,,,unassigned
+10110,10110,데이터 과학,,,unassigned
+10110,10110,미디어 영어,,,unassigned
+10110,10110,세계사,,,unassigned
+10110,10110,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10110,10110,세계 문화와 영어,,,unassigned
+10110,10110,세계시민과 지리,,,unassigned
+10110,10110,경제 수학,,,unassigned
+10111,10111,윤리와 사상,a,윤리와 사상_a_1,assigned
+10111,10111,매체 의사소통,,,unassigned
+10111,10111,화법과 언어,,,unassigned
+10111,10111,음악과 미디어,,,unassigned
+10111,10111,인간과 심리,c,인간과 심리_c_1,assigned
+10111,10111,직무 의사소통,,,unassigned
+10111,10111,보건,,,unassigned
+10111,10111,미술과 매체,,,unassigned
+10111,10111,현대사회와 윤리,,,unassigned
+10111,10111,인간과 철학,,,unassigned
+10111,10111,생태와 환경,,,unassigned
+10111,10111,과학의 역사와 문화,,,unassigned
+10111,10111,한국지리 탐구,,,unassigned
+10111,10111,교육의 이해,d,교육의 이해_d_1,assigned
+10111,10111,미술 창작,,,unassigned
+10111,10111,인문학과 윤리,,,unassigned
+10111,10111,여행지리,,,unassigned
+10111,10111,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10111,10111,세계시민과 지리,,,unassigned
+10111,10111,음악 연주와 창작,,,unassigned
+10111,10111,지구과학,,,unassigned
+10111,10111,지구시스템과학,,,unassigned
+10112,10112,사회문제 탐구,,,unassigned
+10112,10112,윤리와 사상,a,윤리와 사상_a_1,assigned
+10112,10112,매체 의사소통,,,unassigned
+10112,10112,화법과 언어,,,unassigned
+10112,10112,음악과 미디어,,,unassigned
+10112,10112,보건,c,보건_c_1,assigned
+10112,10112,미술과 매체,d,미술과 매체_d_1,assigned
+10112,10112,일본어,,,unassigned
+10112,10112,현대사회와 윤리,,,unassigned
+10112,10112,실생활 영어 회화,,,unassigned
+10112,10112,기후변화와 환경생태,,,unassigned
+10112,10112,주제 탐구 독서,,,unassigned
+10112,10112,직무 영어,,,unassigned
+10112,10112,윤리문제 탐구,,,unassigned
+10112,10112,정보,,,unassigned
+10112,10112,문학과 영상,,,unassigned
+10112,10112,한국지리 탐구,,,unassigned
+10112,10112,교육의 이해,,,unassigned
+10112,10112,미디어 영어,,,unassigned
+10112,10112,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10112,10112,세계 문화와 영어,,,unassigned
+10112,10112,세계시민과 지리,,,unassigned
+10113,10113,사회문제 탐구,,,unassigned
+10113,10113,윤리와 사상,,,unassigned
+10113,10113,매체 의사소통,,,unassigned
+10113,10113,화법과 언어,,,unassigned
+10113,10113,영어Ⅱ,,,unassigned
+10113,10113,음악과 미디어,a,음악과 미디어_a_1,assigned
+10113,10113,인간과 심리,c,인간과 심리_c_1,assigned
+10113,10113,직무 의사소통,,,unassigned
+10113,10113,사회와 문화,,,unassigned
+10113,10113,미술과 매체,,,unassigned
+10113,10113,기후변화와 환경생태,,,unassigned
+10113,10113,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10113,10113,윤리문제 탐구,,,unassigned
+10113,10113,문학과 영상,,,unassigned
+10113,10113,독서 토론과 글쓰기,,,unassigned
+10113,10113,한국지리 탐구,,,unassigned
+10113,10113,교육의 이해,d,교육의 이해_d_1,assigned
+10113,10113,미술 창작,,,unassigned
+10113,10113,세계사,,,unassigned
+10113,10113,세계시민과 지리,,,unassigned
+10113,10113,도시의 미래 탐구,,,unassigned
+10113,10113,세계 문화와 영어 [3-2-D],,,unassigned
+10114,10114,사회문제 탐구,,,unassigned
+10114,10114,화법과 언어,,,unassigned
+10114,10114,영어Ⅱ,,,unassigned
+10114,10114,인간과 심리,c,인간과 심리_c_1,assigned
+10114,10114,직무 의사소통,,,unassigned
+10114,10114,사회와 문화,,,unassigned
+10114,10114,보건,a,보건_a_1,assigned
+10114,10114,미술과 매체,,,unassigned
+10114,10114,현대사회와 윤리,,,unassigned
+10114,10114,실생활 영어 회화,,,unassigned
+10114,10114,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10114,10114,법과 사회,,,unassigned
+10114,10114,직무 영어,,,unassigned
+10114,10114,인간과 철학,,,unassigned
+10114,10114,윤리문제 탐구,,,unassigned
+10114,10114,생명과학,,,unassigned
+10114,10114,한국지리 탐구,,,unassigned
+10114,10114,교육의 이해,d,교육의 이해_d_1,assigned
+10114,10114,미디어 영어,,,unassigned
+10114,10114,여행지리,,,unassigned
+10114,10114,세계 문화와 영어,,,unassigned
+10114,10114,영어 발표와 토론,,,unassigned
+10115,10115,사회문제 탐구,,,unassigned
+10115,10115,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10115,10115,음악과 미디어,c,음악과 미디어_c_1,assigned
+10115,10115,확률과 통계,,,unassigned
+10115,10115,주제 탐구 독서,,,unassigned
+10115,10115,인간과 철학,,,unassigned
+10115,10115,윤리문제 탐구,,,unassigned
+10115,10115,정보,d,정보_d_1,assigned
+10115,10115,과학의 역사와 문화,,,unassigned
+10115,10115,데이터 과학,,,unassigned
+10115,10115,화학,,,unassigned
+10115,10115,물질과 에너지,,,unassigned
+10115,10115,화학 반응의 세계,,,unassigned
+10115,10115,기하,,,unassigned
+10115,10115,인공지능 수학,,,unassigned
+10115,10115,물리학,,,unassigned
+10115,10115,경제 수학,,,unassigned
+10115,10115,직무 수학,,,unassigned
+10115,10115,교육의 이해 [3-2-D],,,unassigned
+10115,10115,미적분Ⅱ,b,미적분Ⅱ_b_1,assigned
+10115,10115,역학과 에너지,,,unassigned
+10115,10115,전자기와 양자,,,unassigned
+10116,10116,사회문제 탐구,,,unassigned
+10116,10116,화법과 언어,,,unassigned
+10116,10116,영어Ⅱ,,,unassigned
+10116,10116,음악과 미디어,c,음악과 미디어_c_1,assigned
+10116,10116,인간과 심리,,,unassigned
+10116,10116,확률과 통계,,,unassigned
+10116,10116,보건,a,보건_a_1,assigned
+10116,10116,현대사회와 윤리,,,unassigned
+10116,10116,기후변화와 환경생태,,,unassigned
+10116,10116,법과 사회,,,unassigned
+10116,10116,생태와 환경,,,unassigned
+10116,10116,과학의 역사와 문화,b,과학의 역사와 문화_b_1,assigned
+10116,10116,생명과학,d,생명과학_d_1,assigned
+10116,10116,생물의 유전,,,unassigned
+10116,10116,데이터 과학,,,unassigned
+10116,10116,세포와 물질대사,,,unassigned
+10116,10116,화학,,,unassigned
+10116,10116,물질과 에너지,,,unassigned
+10116,10116,화학 반응의 세계,,,unassigned
+10116,10116,수학과 문화,,,unassigned
+10116,10116,인공지능 수학,,,unassigned
+10116,10116,교육의 이해 [3-2-D],,,unassigned
+10117,10117,매체 의사소통,,,unassigned
+10117,10117,화법과 언어,a,화법과 언어_a_1,assigned
+10117,10117,음악과 미디어,c,음악과 미디어_c_1,assigned
+10117,10117,직무 의사소통,,,unassigned
+10117,10117,사회와 문화,,,unassigned
+10117,10117,일본어,,,unassigned
+10117,10117,현대사회와 윤리,,,unassigned
+10117,10117,실생활 영어 회화,,,unassigned
+10117,10117,직무 영어,,,unassigned
+10117,10117,정치,,,unassigned
+10117,10117,윤리문제 탐구,,,unassigned
+10117,10117,독서 토론과 글쓰기,,,unassigned
+10117,10117,교육의 이해,d,교육의 이해_d_1,assigned
+10117,10117,인문학과 윤리,,,unassigned
+10117,10117,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10117,10117,마케팅과 광고,,,unassigned
+10117,10117,동아시아 역사 기행,,,unassigned
+10117,10117,언어생활 탐구,,,unassigned
+10117,10117,영어 발표와 토론,,,unassigned
+10117,10117,세계 문화와 영어 [3-2-D],,,unassigned
+10117,10117,중국어(폐강),,,unassigned
+10117,10117,한문(폐강),,,unassigned
+10118,10118,사회문제 탐구,,,unassigned
+10118,10118,윤리와 사상,d,윤리와 사상_d_1,assigned
+10118,10118,매체 의사소통,c,매체 의사소통_c_1,assigned
+10118,10118,화법과 언어,a,화법과 언어_a_1,assigned
+10118,10118,인간과 심리,,,unassigned
+10118,10118,직무 의사소통,,,unassigned
+10118,10118,보건,,,unassigned
+10118,10118,현대사회와 윤리,,,unassigned
+10118,10118,인간과 철학,,,unassigned
+10118,10118,생태와 환경,,,unassigned
+10118,10118,과학의 역사와 문화,,,unassigned
+10118,10118,생명과학,,,unassigned
+10118,10118,미술 창작,,,unassigned
+10118,10118,생물의 유전,,,unassigned
+10118,10118,데이터 과학,,,unassigned
+10118,10118,여행지리,,,unassigned
+10118,10118,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10118,10118,세계시민과 지리,,,unassigned
+10118,10118,지구과학,,,unassigned
+10118,10118,행성우주과학,,,unassigned
+10118,10118,도시의 미래 탐구,,,unassigned
+10118,10118,지구시스템과학,,,unassigned
+10119,10119,윤리와 사상,d,윤리와 사상_d_1,assigned
+10119,10119,매체 의사소통,c,매체 의사소통_c_1,assigned
+10119,10119,화법과 언어,,,unassigned
+10119,10119,영어Ⅱ,,,unassigned
+10119,10119,음악과 미디어,a,음악과 미디어_a_1,assigned
+10119,10119,인간과 심리,,,unassigned
+10119,10119,직무 의사소통,,,unassigned
+10119,10119,미술과 매체,,,unassigned
+10119,10119,일본어,,,unassigned
+10119,10119,현대사회와 윤리,,,unassigned
+10119,10119,주제 탐구 독서,,,unassigned
+10119,10119,직무 영어,,,unassigned
+10119,10119,인간과 철학,,,unassigned
+10119,10119,윤리문제 탐구,,,unassigned
+10119,10119,문학과 영상,,,unassigned
+10119,10119,독서 토론과 글쓰기,,,unassigned
+10119,10119,미술 창작,,,unassigned
+10119,10119,미디어 영어,,,unassigned
+10119,10119,세계사,,,unassigned
+10119,10119,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10119,10119,마케팅과 광고,,,unassigned
+10119,10119,교육의 이해 [3-2-D],,,unassigned
+10120,10120,사회문제 탐구,,,unassigned
+10120,10120,윤리와 사상,c,윤리와 사상_c_1,assigned
+10120,10120,화법과 언어,b,화법과 언어_b_1,assigned
+10120,10120,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10120,10120,확률과 통계,,,unassigned
+10120,10120,미술과 매체,,,unassigned
+10120,10120,일본어,d,일본어_d_1,assigned
+10120,10120,실생활 영어 회화,,,unassigned
+10120,10120,주제 탐구 독서,,,unassigned
+10120,10120,직무 영어,,,unassigned
+10120,10120,인간과 철학,,,unassigned
+10120,10120,정보,,,unassigned
+10120,10120,인간과 경제활동,,,unassigned
+10120,10120,교육의 이해,,,unassigned
+10120,10120,미술 창작,,,unassigned
+10120,10120,미디어 영어,,,unassigned
+10120,10120,세계사,,,unassigned
+10120,10120,마케팅과 광고,,,unassigned
+10120,10120,수학과 문화,,,unassigned
+10120,10120,음악 연주와 창작,,,unassigned
+10120,10120,직무 수학,,,unassigned
+10120,10120,언어생활 탐구,,,unassigned
+10121,10121,사회문제 탐구,,,unassigned
+10121,10121,영어Ⅱ,,,unassigned
+10121,10121,음악과 미디어,c,음악과 미디어_c_1,assigned
+10121,10121,인간과 심리,,,unassigned
+10121,10121,보건,a,보건_a_1,assigned
+10121,10121,미술과 매체,,,unassigned
+10121,10121,일본어,d,일본어_d_1,assigned
+10121,10121,현대사회와 윤리,,,unassigned
+10121,10121,실생활 영어 회화,,,unassigned
+10121,10121,기후변화와 환경생태,,,unassigned
+10121,10121,주제 탐구 독서,,,unassigned
+10121,10121,직무 영어,,,unassigned
+10121,10121,윤리문제 탐구,,,unassigned
+10121,10121,문학과 영상,,,unassigned
+10121,10121,한국지리 탐구,,,unassigned
+10121,10121,교육의 이해,,,unassigned
+10121,10121,미술 창작,,,unassigned
+10121,10121,여행지리,,,unassigned
+10121,10121,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10121,10121,마케팅과 광고,,,unassigned
+10121,10121,세계시민과 지리,,,unassigned
+10121,10121,음악 연주와 창작,,,unassigned
+10122,10122,영어Ⅱ,,,unassigned
+10122,10122,인간과 심리,c,인간과 심리_c_1,assigned
+10122,10122,직무 의사소통,,,unassigned
+10122,10122,사회와 문화,,,unassigned
+10122,10122,보건,a,보건_a_1,assigned
+10122,10122,일본어,d,일본어_d_1,assigned
+10122,10122,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10122,10122,정보,,,unassigned
+10122,10122,독서 토론과 글쓰기,,,unassigned
+10122,10122,세계사,,,unassigned
+10122,10122,마케팅과 광고,,,unassigned
+10122,10122,세계 문화와 영어,,,unassigned
+10122,10122,언어생활 탐구,,,unassigned
+10123,10123,사회문제 탐구,,,unassigned
+10123,10123,윤리와 사상,c,윤리와 사상_c_1,assigned
+10123,10123,매체 의사소통,b,매체 의사소통_b_1,assigned
+10123,10123,화법과 언어,,,unassigned
+10123,10123,음악과 미디어,a,음악과 미디어_a_1,assigned
+10123,10123,인간과 심리,,,unassigned
+10123,10123,직무 의사소통,,,unassigned
+10123,10123,사회와 문화,,,unassigned
+10123,10123,미술과 매체,d,미술과 매체_d_1,assigned
+10123,10123,일본어,,,unassigned
+10123,10123,실생활 영어 회화,,,unassigned
+10123,10123,법과 사회,,,unassigned
+10123,10123,직무 영어,,,unassigned
+10123,10123,문학과 영상,,,unassigned
+10123,10123,교육의 이해,,,unassigned
+10123,10123,미술 창작,,,unassigned
+10123,10123,생물의 유전,,,unassigned
+10123,10123,데이터 과학,,,unassigned
+10123,10123,미디어 영어,,,unassigned
+10123,10123,여행지리,,,unassigned
+10123,10123,세계사,,,unassigned
+10123,10123,마케팅과 광고,,,unassigned
+10124,10124,매체 의사소통,b,매체 의사소통_b_1,assigned
+10124,10124,음악과 미디어,a,음악과 미디어_a_1,assigned
+10124,10124,직무 의사소통,,,unassigned
+10124,10124,보건,,,unassigned
+10124,10124,미술과 매체,,,unassigned
+10124,10124,일본어,d,일본어_d_1,assigned
+10124,10124,기후변화와 환경생태,,,unassigned
+10124,10124,법과 사회,,,unassigned
+10124,10124,인간과 철학,,,unassigned
+10124,10124,생태와 환경,c,생태와 환경_c_1,assigned
+10124,10124,정치,,,unassigned
+10124,10124,정보,,,unassigned
+10124,10124,문학과 영상,,,unassigned
+10124,10124,한국지리 탐구,,,unassigned
+10124,10124,교육의 이해,,,unassigned
+10124,10124,미술 창작,,,unassigned
+10124,10124,여행지리,,,unassigned
+10124,10124,마케팅과 광고,,,unassigned
+10124,10124,화학,,,unassigned
+10124,10124,화학 반응의 세계,,,unassigned
+10124,10124,음악 연주와 창작,,,unassigned
+10124,10124,동아시아 역사 기행,,,unassigned
+10201,10201,사회문제 탐구,,,unassigned
+10201,10201,매체 의사소통,b,매체 의사소통_b_1,assigned
+10201,10201,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10201,10201,확률과 통계,,,unassigned
+10201,10201,직무 의사소통,,,unassigned
+10201,10201,사회와 문화,,,unassigned
+10201,10201,보건,,,unassigned
+10201,10201,미술과 매체,d,미술과 매체_d_1,assigned
+10201,10201,실생활 영어 회화,,,unassigned
+10201,10201,법과 사회,,,unassigned
+10201,10201,직무 영어,,,unassigned
+10201,10201,생태와 환경,c,생태와 환경_c_1,assigned
+10201,10201,정치,,,unassigned
+10201,10201,정보,,,unassigned
+10201,10201,독서 토론과 글쓰기,,,unassigned
+10201,10201,한국지리 탐구,,,unassigned
+10201,10201,인문학과 윤리,,,unassigned
+10201,10201,미디어 영어,,,unassigned
+10201,10201,세계사,,,unassigned
+10201,10201,세계 문화와 영어,,,unassigned
+10201,10201,교육의 이해 [3-2-D],,,unassigned
+10201,10201,언어생활 탐구,,,unassigned
+10202,10202,사회문제 탐구,,,unassigned
+10202,10202,윤리와 사상,a,윤리와 사상_a_1,assigned
+10202,10202,매체 의사소통,,,unassigned
+10202,10202,화법과 언어,,,unassigned
+10202,10202,영어Ⅱ,,,unassigned
+10202,10202,음악과 미디어,c,음악과 미디어_c_1,assigned
+10202,10202,인간과 심리,,,unassigned
+10202,10202,직무 의사소통,,,unassigned
+10202,10202,미술과 매체,,,unassigned
+10202,10202,현대사회와 윤리,,,unassigned
+10202,10202,실생활 영어 회화,,,unassigned
+10202,10202,주제 탐구 독서,,,unassigned
+10202,10202,직무 영어,,,unassigned
+10202,10202,인간과 철학,,,unassigned
+10202,10202,문학과 영상,,,unassigned
+10202,10202,독서 토론과 글쓰기,,,unassigned
+10202,10202,교육의 이해,d,교육의 이해_d_1,assigned
+10202,10202,세계사,,,unassigned
+10202,10202,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10202,10202,세계 문화와 영어,,,unassigned
+10202,10202,음악 연주와 창작,,,unassigned
+10202,10202,중국어(폐강),,,unassigned
+10203,10203,사회문제 탐구,,,unassigned
+10203,10203,윤리와 사상,a,윤리와 사상_a_1,assigned
+10203,10203,매체 의사소통,c,매체 의사소통_c_1,assigned
+10203,10203,화법과 언어,,,unassigned
+10203,10203,영어Ⅱ,,,unassigned
+10203,10203,인간과 심리,,,unassigned
+10203,10203,직무 의사소통,,,unassigned
+10203,10203,사회와 문화,,,unassigned
+10203,10203,미술과 매체,d,미술과 매체_d_1,assigned
+10203,10203,일본어,,,unassigned
+10203,10203,직무 영어,,,unassigned
+10203,10203,생태와 환경,,,unassigned
+10203,10203,윤리문제 탐구,,,unassigned
+10203,10203,문학과 영상,,,unassigned
+10203,10203,교육의 이해,,,unassigned
+10203,10203,미술 창작,,,unassigned
+10203,10203,인문학과 윤리,,,unassigned
+10203,10203,미디어 영어,,,unassigned
+10203,10203,여행지리,,,unassigned
+10203,10203,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10203,10203,마케팅과 광고,,,unassigned
+10203,10203,세계 문화와 영어,,,unassigned
+10204,10204,사회문제 탐구,,,unassigned
+10204,10204,윤리와 사상,a,윤리와 사상_a_1,assigned
+10204,10204,매체 의사소통,b,매체 의사소통_b_1,assigned
+10204,10204,영어Ⅱ,,,unassigned
+10204,10204,인간과 심리,c,인간과 심리_c_1,assigned
+10204,10204,확률과 통계,,,unassigned
+10204,10204,직무 의사소통,,,unassigned
+10204,10204,사회와 문화,,,unassigned
+10204,10204,미술과 매체,,,unassigned
+10204,10204,현대사회와 윤리,,,unassigned
+10204,10204,법과 사회,,,unassigned
+10204,10204,직무 영어,,,unassigned
+10204,10204,인간과 철학,,,unassigned
+10204,10204,정치,,,unassigned
+10204,10204,윤리문제 탐구,,,unassigned
+10204,10204,인간과 경제활동,,,unassigned
+10204,10204,독서 토론과 글쓰기,,,unassigned
+10204,10204,교육의 이해,d,교육의 이해_d_1,assigned
+10204,10204,인문학과 윤리,,,unassigned
+10204,10204,세계사,,,unassigned
+10204,10204,동아시아 역사 기행,,,unassigned
+10204,10204,한문(폐강),,,unassigned
+10205,10205,사회문제 탐구,,,unassigned
+10205,10205,윤리와 사상,c,윤리와 사상_c_1,assigned
+10205,10205,화법과 언어,a,화법과 언어_a_1,assigned
+10205,10205,직무 의사소통,,,unassigned
+10205,10205,사회와 문화,,,unassigned
+10205,10205,미술과 매체,d,미술과 매체_d_1,assigned
+10205,10205,일본어,,,unassigned
+10205,10205,현대사회와 윤리,,,unassigned
+10205,10205,기후변화와 환경생태,,,unassigned
+10205,10205,인간과 철학,,,unassigned
+10205,10205,정치,,,unassigned
+10205,10205,윤리문제 탐구,,,unassigned
+10205,10205,정보,,,unassigned
+10205,10205,문학과 영상,,,unassigned
+10205,10205,인간과 경제활동,,,unassigned
+10205,10205,독서 토론과 글쓰기,,,unassigned
+10205,10205,한국지리 탐구,,,unassigned
+10205,10205,미술 창작,,,unassigned
+10205,10205,인문학과 윤리,,,unassigned
+10205,10205,여행지리,,,unassigned
+10205,10205,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10205,10205,세계시민과 지리,,,unassigned
+10206,10206,사회문제 탐구,,,unassigned
+10206,10206,윤리와 사상,d,윤리와 사상_d_1,assigned
+10206,10206,음악과 미디어,a,음악과 미디어_a_1,assigned
+10206,10206,사회와 문화,,,unassigned
+10206,10206,보건,,,unassigned
+10206,10206,현대사회와 윤리,,,unassigned
+10206,10206,기후변화와 환경생태,,,unassigned
+10206,10206,법과 사회,,,unassigned
+10206,10206,생태와 환경,c,생태와 환경_c_1,assigned
+10206,10206,정치,,,unassigned
+10206,10206,과학의 역사와 문화,,,unassigned
+10206,10206,인간과 경제활동,,,unassigned
+10206,10206,한국지리 탐구,,,unassigned
+10206,10206,데이터 과학,,,unassigned
+10206,10206,여행지리,,,unassigned
+10206,10206,세계사,,,unassigned
+10206,10206,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10206,10206,세계시민과 지리,,,unassigned
+10206,10206,동아시아 역사 기행,,,unassigned
+10206,10206,지구과학,,,unassigned
+10206,10206,행성우주과학,,,unassigned
+10206,10206,도시의 미래 탐구,,,unassigned
+10207,10207,사회문제 탐구,,,unassigned
+10207,10207,윤리와 사상,c,윤리와 사상_c_1,assigned
+10207,10207,매체 의사소통,,,unassigned
+10207,10207,음악과 미디어,,,unassigned
+10207,10207,인간과 심리,,,unassigned
+10207,10207,확률과 통계,,,unassigned
+10207,10207,직무 의사소통,,,unassigned
+10207,10207,사회와 문화,,,unassigned
+10207,10207,보건,a,보건_a_1,assigned
+10207,10207,미술과 매체,d,미술과 매체_d_1,assigned
+10207,10207,일본어,,,unassigned
+10207,10207,실생활 영어 회화,,,unassigned
+10207,10207,기후변화와 환경생태,,,unassigned
+10207,10207,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10207,10207,정치,,,unassigned
+10207,10207,독서 토론과 글쓰기,,,unassigned
+10207,10207,한국지리 탐구,,,unassigned
+10207,10207,인문학과 윤리,,,unassigned
+10207,10207,음악 연주와 창작,,,unassigned
+10207,10207,기하,,,unassigned
+10207,10207,물리학,,,unassigned
+10207,10207,교육의 이해 [3-2-D],,,unassigned
+10208,10208,사회문제 탐구,,,unassigned
+10208,10208,윤리와 사상,a,윤리와 사상_a_1,assigned
+10208,10208,매체 의사소통,,,unassigned
+10208,10208,화법과 언어,,,unassigned
+10208,10208,인간과 심리,c,인간과 심리_c_1,assigned
+10208,10208,직무 의사소통,,,unassigned
+10208,10208,미술과 매체,,,unassigned
+10208,10208,일본어,d,일본어_d_1,assigned
+10208,10208,현대사회와 윤리,,,unassigned
+10208,10208,실생활 영어 회화,,,unassigned
+10208,10208,기후변화와 환경생태,,,unassigned
+10208,10208,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10208,10208,정치,,,unassigned
+10208,10208,윤리문제 탐구,,,unassigned
+10208,10208,문학과 영상,,,unassigned
+10208,10208,인간과 경제활동,,,unassigned
+10208,10208,교육의 이해,,,unassigned
+10208,10208,인문학과 윤리,,,unassigned
+10208,10208,마케팅과 광고,,,unassigned
+10208,10208,지구과학,,,unassigned
+10208,10208,행성우주과학,,,unassigned
+10208,10208,지구시스템과학,,,unassigned
+10209,10209,사회문제 탐구,,,unassigned
+10209,10209,윤리와 사상,,,unassigned
+10209,10209,음악과 미디어,a,음악과 미디어_a_1,assigned
+10209,10209,인간과 심리,c,인간과 심리_c_1,assigned
+10209,10209,기후변화와 환경생태,,,unassigned
+10209,10209,주제 탐구 독서,,,unassigned
+10209,10209,직무 영어,,,unassigned
+10209,10209,생태와 환경,,,unassigned
+10209,10209,인간과 경제활동,,,unassigned
+10209,10209,독서 토론과 글쓰기,,,unassigned
+10209,10209,한국지리 탐구,,,unassigned
+10209,10209,교육의 이해,d,교육의 이해_d_1,assigned
+10209,10209,데이터 과학,,,unassigned
+10209,10209,여행지리,,,unassigned
+10209,10209,세계사,,,unassigned
+10209,10209,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10209,10209,세계시민과 지리,,,unassigned
+10209,10209,동아시아 역사 기행,,,unassigned
+10209,10209,지구과학,,,unassigned
+10209,10209,행성우주과학,,,unassigned
+10209,10209,도시의 미래 탐구,,,unassigned
+10209,10209,지구시스템과학,,,unassigned
+10210,10210,윤리와 사상,,,unassigned
+10210,10210,매체 의사소통,c,매체 의사소통_c_1,assigned
+10210,10210,화법과 언어,b,화법과 언어_b_1,assigned
+10210,10210,영어Ⅱ,,,unassigned
+10210,10210,음악과 미디어,a,음악과 미디어_a_1,assigned
+10210,10210,인간과 심리,,,unassigned
+10210,10210,직무 의사소통,,,unassigned
+10210,10210,미술과 매체,d,미술과 매체_d_1,assigned
+10210,10210,일본어,,,unassigned
+10210,10210,실생활 영어 회화,,,unassigned
+10210,10210,법과 사회,,,unassigned
+10210,10210,직무 영어,,,unassigned
+10210,10210,인간과 철학,,,unassigned
+10210,10210,윤리문제 탐구,,,unassigned
+10210,10210,독서 토론과 글쓰기,,,unassigned
+10210,10210,교육의 이해,,,unassigned
+10210,10210,미술 창작,,,unassigned
+10210,10210,미디어 영어,,,unassigned
+10210,10210,마케팅과 광고,,,unassigned
+10210,10210,세계 문화와 영어,,,unassigned
+10210,10210,음악 연주와 창작,,,unassigned
+10210,10210,언어생활 탐구,,,unassigned
+10211,10211,사회문제 탐구,,,unassigned
+10211,10211,윤리와 사상,d,윤리와 사상_d_1,assigned
+10211,10211,매체 의사소통,c,매체 의사소통_c_1,assigned
+10211,10211,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10211,10211,확률과 통계,,,unassigned
+10211,10211,직무 의사소통,,,unassigned
+10211,10211,미술과 매체,,,unassigned
+10211,10211,인간과 철학,,,unassigned
+10211,10211,생태와 환경,,,unassigned
+10211,10211,정보,,,unassigned
+10211,10211,과학의 역사와 문화,,,unassigned
+10211,10211,데이터 과학,,,unassigned
+10211,10211,미디어 영어,,,unassigned
+10211,10211,여행지리,,,unassigned
+10211,10211,세계 문화와 영어,,,unassigned
+10211,10211,화학,,,unassigned
+10211,10211,기하,,,unassigned
+10211,10211,인공지능 수학,,,unassigned
+10211,10211,물리학,,,unassigned
+10211,10211,미적분Ⅱ,b,미적분Ⅱ_b_1,assigned
+10211,10211,역학과 에너지,,,unassigned
+10211,10211,전자기와 양자,,,unassigned
+10212,10212,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10212,10212,음악과 미디어,,,unassigned
+10212,10212,확률과 통계,,,unassigned
+10212,10212,실생활 영어 회화,,,unassigned
+10212,10212,직무 영어,,,unassigned
+10212,10212,생태와 환경,c,생태와 환경_c_1,assigned
+10212,10212,정보,d,정보_d_1,assigned
+10212,10212,과학의 역사와 문화,,,unassigned
+10212,10212,인간과 경제활동,,,unassigned
+10212,10212,한국지리 탐구,,,unassigned
+10212,10212,데이터 과학,,,unassigned
+10212,10212,세계시민과 지리,,,unassigned
+10212,10212,기하,,,unassigned
+10212,10212,인공지능 수학,,,unassigned
+10212,10212,물리학,,,unassigned
+10212,10212,지구과학,,,unassigned
+10212,10212,행성우주과학,,,unassigned
+10212,10212,미적분Ⅱ,b,미적분Ⅱ_b_1,assigned
+10212,10212,지구시스템과학,,,unassigned
+10212,10212,세계 문화와 영어 [3-2-D],,,unassigned
+10212,10212,역학과 에너지,,,unassigned
+10212,10212,전자기와 양자,,,unassigned
+10213,10213,사회문제 탐구,,,unassigned
+10213,10213,윤리와 사상,a,윤리와 사상_a_1,assigned
+10213,10213,영어Ⅱ,,,unassigned
+10213,10213,인간과 심리,,,unassigned
+10213,10213,직무 의사소통,,,unassigned
+10213,10213,사회와 문화,,,unassigned
+10213,10213,미술과 매체,d,미술과 매체_d_1,assigned
+10213,10213,현대사회와 윤리,,,unassigned
+10213,10213,실생활 영어 회화,,,unassigned
+10213,10213,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10213,10213,법과 사회,,,unassigned
+10213,10213,직무 영어,,,unassigned
+10213,10213,인간과 철학,,,unassigned
+10213,10213,생태와 환경,c,생태와 환경_c_1,assigned
+10213,10213,정치,,,unassigned
+10213,10213,독서 토론과 글쓰기,,,unassigned
+10213,10213,한국지리 탐구,,,unassigned
+10213,10213,데이터 과학,,,unassigned
+10213,10213,여행지리,,,unassigned
+10213,10213,세계사,,,unassigned
+10213,10213,세계 문화와 영어,,,unassigned
+10213,10213,도시의 미래 탐구,,,unassigned
+10214,10214,사회문제 탐구,,,unassigned
+10214,10214,윤리와 사상,d,윤리와 사상_d_1,assigned
+10214,10214,매체 의사소통,b,매체 의사소통_b_1,assigned
+10214,10214,화법과 언어,,,unassigned
+10214,10214,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10214,10214,인간과 심리,c,인간과 심리_c_1,assigned
+10214,10214,사회와 문화,,,unassigned
+10214,10214,보건,,,unassigned
+10214,10214,미술과 매체,,,unassigned
+10214,10214,일본어,,,unassigned
+10214,10214,현대사회와 윤리,,,unassigned
+10214,10214,기후변화와 환경생태,,,unassigned
+10214,10214,법과 사회,,,unassigned
+10214,10214,직무 영어,,,unassigned
+10214,10214,인간과 철학,,,unassigned
+10214,10214,정치,,,unassigned
+10214,10214,윤리문제 탐구,,,unassigned
+10214,10214,문학과 영상,,,unassigned
+10214,10214,생명과학,,,unassigned
+10214,10214,교육의 이해,,,unassigned
+10214,10214,여행지리,,,unassigned
+10214,10214,물리학,,,unassigned
+10215,10215,사회문제 탐구,,,unassigned
+10215,10215,윤리와 사상,a,윤리와 사상_a_1,assigned
+10215,10215,매체 의사소통,c,매체 의사소통_c_1,assigned
+10215,10215,인간과 심리,,,unassigned
+10215,10215,직무 의사소통,,,unassigned
+10215,10215,사회와 문화,,,unassigned
+10215,10215,보건,,,unassigned
+10215,10215,현대사회와 윤리,,,unassigned
+10215,10215,기후변화와 환경생태,,,unassigned
+10215,10215,인간과 철학,,,unassigned
+10215,10215,윤리문제 탐구,,,unassigned
+10215,10215,한국지리 탐구,,,unassigned
+10215,10215,교육의 이해,d,교육의 이해_d_1,assigned
+10215,10215,여행지리,,,unassigned
+10215,10215,세계사,,,unassigned
+10215,10215,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10215,10215,마케팅과 광고,,,unassigned
+10215,10215,세계시민과 지리,,,unassigned
+10215,10215,지구과학,,,unassigned
+10215,10215,행성우주과학,,,unassigned
+10215,10215,도시의 미래 탐구,,,unassigned
+10215,10215,중국어(폐강),,,unassigned
+10216,10216,사회문제 탐구,,,unassigned
+10216,10216,화법과 언어,b,화법과 언어_b_1,assigned
+10216,10216,인간과 심리,c,인간과 심리_c_1,assigned
+10216,10216,보건,a,보건_a_1,assigned
+10216,10216,일본어,,,unassigned
+10216,10216,현대사회와 윤리,,,unassigned
+10216,10216,실생활 영어 회화,,,unassigned
+10216,10216,직무 영어,,,unassigned
+10216,10216,인간과 철학,,,unassigned
+10216,10216,생태와 환경,,,unassigned
+10216,10216,정치,,,unassigned
+10216,10216,문학과 영상,,,unassigned
+10216,10216,과학의 역사와 문화,,,unassigned
+10216,10216,생명과학,d,생명과학_d_1,assigned
+10216,10216,한국지리 탐구,,,unassigned
+10216,10216,미술 창작,,,unassigned
+10216,10216,데이터 과학,,,unassigned
+10216,10216,여행지리,,,unassigned
+10216,10216,세포와 물질대사,,,unassigned
+10216,10216,물리학,,,unassigned
+10216,10216,경제 수학,,,unassigned
+10216,10216,영어 발표와 토론,,,unassigned
+10217,10217,사회문제 탐구,,,unassigned
+10217,10217,매체 의사소통,c,매체 의사소통_c_1,assigned
+10217,10217,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10217,10217,확률과 통계,,,unassigned
+10217,10217,직무 의사소통,,,unassigned
+10217,10217,미술과 매체,,,unassigned
+10217,10217,실생활 영어 회화,,,unassigned
+10217,10217,직무 영어,,,unassigned
+10217,10217,인간과 철학,,,unassigned
+10217,10217,정보,,,unassigned
+10217,10217,교육의 이해,d,교육의 이해_d_1,assigned
+10217,10217,미술 창작,,,unassigned
+10217,10217,데이터 과학,,,unassigned
+10217,10217,미디어 영어,,,unassigned
+10217,10217,여행지리,,,unassigned
+10217,10217,세계 문화와 영어,,,unassigned
+10217,10217,기하,,,unassigned
+10217,10217,인공지능 수학,,,unassigned
+10217,10217,물리학,,,unassigned
+10217,10217,미적분Ⅱ,b,미적분Ⅱ_b_1,assigned
+10217,10217,역학과 에너지,,,unassigned
+10217,10217,전자기와 양자,,,unassigned
+10218,10218,사회문제 탐구,,,unassigned
+10218,10218,윤리와 사상,d,윤리와 사상_d_1,assigned
+10218,10218,매체 의사소통,b,매체 의사소통_b_1,assigned
+10218,10218,화법과 언어,,,unassigned
+10218,10218,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10218,10218,인간과 심리,,,unassigned
+10218,10218,확률과 통계,,,unassigned
+10218,10218,직무 의사소통,,,unassigned
+10218,10218,사회와 문화,,,unassigned
+10218,10218,보건,,,unassigned
+10218,10218,현대사회와 윤리,,,unassigned
+10218,10218,기후변화와 환경생태,,,unassigned
+10218,10218,인간과 철학,,,unassigned
+10218,10218,생태와 환경,c,생태와 환경_c_1,assigned
+10218,10218,윤리문제 탐구,,,unassigned
+10218,10218,생명과학,,,unassigned
+10218,10218,독서 토론과 글쓰기,,,unassigned
+10218,10218,미술 창작,,,unassigned
+10218,10218,생물의 유전,,,unassigned
+10218,10218,인문학과 윤리,,,unassigned
+10218,10218,세포와 물질대사,,,unassigned
+10218,10218,화학,,,unassigned
+10219,10219,사회문제 탐구,,,unassigned
+10219,10219,음악과 미디어,a,음악과 미디어_a_1,assigned
+10219,10219,인간과 심리,,,unassigned
+10219,10219,확률과 통계,,,unassigned
+10219,10219,미술과 매체,,,unassigned
+10219,10219,일본어,d,일본어_d_1,assigned
+10219,10219,기후변화와 환경생태,,,unassigned
+10219,10219,생태와 환경,c,생태와 환경_c_1,assigned
+10219,10219,정보,,,unassigned
+10219,10219,과학의 역사와 문화,b,과학의 역사와 문화_b_1,assigned
+10219,10219,인간과 경제활동,,,unassigned
+10219,10219,한국지리 탐구,,,unassigned
+10219,10219,교육의 이해,,,unassigned
+10219,10219,미술 창작,,,unassigned
+10219,10219,데이터 과학,,,unassigned
+10219,10219,미디어 영어,,,unassigned
+10219,10219,여행지리,,,unassigned
+10219,10219,인공지능 수학,,,unassigned
+10219,10219,경제 수학,,,unassigned
+10219,10219,지구과학,,,unassigned
+10219,10219,행성우주과학,,,unassigned
+10219,10219,지구시스템과학,,,unassigned
+10220,10220,화법과 언어,,,unassigned
+10220,10220,확률과 통계,,,unassigned
+10220,10220,보건,a,보건_a_1,assigned
+10220,10220,실생활 영어 회화,,,unassigned
+10220,10220,기후변화와 환경생태,,,unassigned
+10220,10220,인간과 철학,,,unassigned
+10220,10220,생태와 환경,,,unassigned
+10220,10220,과학의 역사와 문화,b,과학의 역사와 문화_b_1,assigned
+10220,10220,인간과 경제활동,,,unassigned
+10220,10220,생명과학,d,생명과학_d_1,assigned
+10220,10220,미술 창작,,,unassigned
+10220,10220,생물의 유전,,,unassigned
+10220,10220,데이터 과학,,,unassigned
+10220,10220,세포와 물질대사,,,unassigned
+10220,10220,화학,,,unassigned
+10220,10220,물질과 에너지,,,unassigned
+10220,10220,화학 반응의 세계,,,unassigned
+10220,10220,수학과 문화,,,unassigned
+10220,10220,기하,,,unassigned
+10220,10220,물리학,,,unassigned
+10220,10220,미적분Ⅱ,c,미적분Ⅱ_c_1,assigned
+10220,10220,역학과 에너지,,,unassigned
+10221,10221,사회문제 탐구,,,unassigned
+10221,10221,윤리와 사상,d,윤리와 사상_d_1,assigned
+10221,10221,매체 의사소통,b,매체 의사소통_b_1,assigned
+10221,10221,확률과 통계,,,unassigned
+10221,10221,사회와 문화,,,unassigned
+10221,10221,미술과 매체,,,unassigned
+10221,10221,현대사회와 윤리,,,unassigned
+10221,10221,기후변화와 환경생태,,,unassigned
+10221,10221,법과 사회,,,unassigned
+10221,10221,직무 영어,,,unassigned
+10221,10221,생태와 환경,c,생태와 환경_c_1,assigned
+10221,10221,정치,,,unassigned
+10221,10221,윤리문제 탐구,,,unassigned
+10221,10221,인간과 경제활동,,,unassigned
+10221,10221,인문학과 윤리,,,unassigned
+10221,10221,데이터 과학,,,unassigned
+10221,10221,미디어 영어,,,unassigned
+10221,10221,마케팅과 광고,,,unassigned
+10221,10221,세계 문화와 영어,,,unassigned
+10221,10221,경제 수학,,,unassigned
+10221,10221,도시의 미래 탐구,,,unassigned
+10221,10221,한문(폐강),a,한문(폐강)_a_1,assigned
+10222,10222,사회문제 탐구,,,unassigned
+10222,10222,윤리와 사상,d,윤리와 사상_d_1,assigned
+10222,10222,매체 의사소통,b,매체 의사소통_b_1,assigned
+10222,10222,화법과 언어,,,unassigned
+10222,10222,영어Ⅱ,,,unassigned
+10222,10222,인간과 심리,c,인간과 심리_c_1,assigned
+10222,10222,확률과 통계,,,unassigned
+10222,10222,직무 의사소통,,,unassigned
+10222,10222,사회와 문화,,,unassigned
+10222,10222,보건,a,보건_a_1,assigned
+10222,10222,현대사회와 윤리,,,unassigned
+10222,10222,기후변화와 환경생태,,,unassigned
+10222,10222,인간과 철학,,,unassigned
+10222,10222,생태와 환경,,,unassigned
+10222,10222,윤리문제 탐구,,,unassigned
+10222,10222,생명과학,,,unassigned
+10222,10222,독서 토론과 글쓰기,,,unassigned
+10222,10222,미술 창작,,,unassigned
+10222,10222,생물의 유전,,,unassigned
+10222,10222,인문학과 윤리,,,unassigned
+10222,10222,세포와 물질대사,,,unassigned
+10222,10222,화학,,,unassigned
+10223,10223,사회문제 탐구,,,unassigned
+10223,10223,매체 의사소통,c,매체 의사소통_c_1,assigned
+10223,10223,화법과 언어,a,화법과 언어_a_1,assigned
+10223,10223,직무 의사소통,,,unassigned
+10223,10223,사회와 문화,,,unassigned
+10223,10223,미술과 매체,,,unassigned
+10223,10223,현대사회와 윤리,,,unassigned
+10223,10223,기후변화와 환경생태,,,unassigned
+10223,10223,주제 탐구 독서,,,unassigned
+10223,10223,생태와 환경,,,unassigned
+10223,10223,윤리문제 탐구,,,unassigned
+10223,10223,문학과 영상,,,unassigned
+10223,10223,인간과 경제활동,,,unassigned
+10223,10223,생명과학,,,unassigned
+10223,10223,독서 토론과 글쓰기,,,unassigned
+10223,10223,한국지리 탐구,,,unassigned
+10223,10223,교육의 이해,d,교육의 이해_d_1,assigned
+10223,10223,생물의 유전,,,unassigned
+10223,10223,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10223,10223,세계시민과 지리,,,unassigned
+10223,10223,도시의 미래 탐구,,,unassigned
+10223,10223,중국어(폐강),,,unassigned
+10301,10301,사회문제 탐구,,,unassigned
+10301,10301,윤리와 사상,,,unassigned
+10301,10301,매체 의사소통,,,unassigned
+10301,10301,화법과 언어,a,화법과 언어_a_1,assigned
+10301,10301,영어Ⅱ,,,unassigned
+10301,10301,음악과 미디어,c,음악과 미디어_c_1,assigned
+10301,10301,확률과 통계,,,unassigned
+10301,10301,사회와 문화,,,unassigned
+10301,10301,일본어,d,일본어_d_1,assigned
+10301,10301,실생활 영어 회화,,,unassigned
+10301,10301,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10301,10301,법과 사회,,,unassigned
+10301,10301,직무 영어,,,unassigned
+10301,10301,정치,,,unassigned
+10301,10301,정보,,,unassigned
+10301,10301,문학과 영상,,,unassigned
+10301,10301,과학의 역사와 문화,,,unassigned
+10301,10301,인간과 경제활동,,,unassigned
+10301,10301,생명과학,,,unassigned
+10301,10301,생물의 유전,,,unassigned
+10301,10301,데이터 과학,,,unassigned
+10301,10301,세포와 물질대사,,,unassigned
+10302,10302,사회문제 탐구,,,unassigned
+10302,10302,윤리와 사상,a,윤리와 사상_a_1,assigned
+10302,10302,매체 의사소통,b,매체 의사소통_b_1,assigned
+10302,10302,영어Ⅱ,,,unassigned
+10302,10302,직무 의사소통,,,unassigned
+10302,10302,사회와 문화,,,unassigned
+10302,10302,보건,c,보건_c_1,assigned
+10302,10302,미술과 매체,d,미술과 매체_d_1,assigned
+10302,10302,실생활 영어 회화,,,unassigned
+10302,10302,법과 사회,,,unassigned
+10302,10302,직무 영어,,,unassigned
+10302,10302,윤리문제 탐구,,,unassigned
+10302,10302,정보,,,unassigned
+10302,10302,인간과 경제활동,,,unassigned
+10302,10302,인문학과 윤리,,,unassigned
+10302,10302,미디어 영어,,,unassigned
+10302,10302,마케팅과 광고,,,unassigned
+10302,10302,세계 문화와 영어,,,unassigned
+10302,10302,기하,,,unassigned
+10302,10302,경제 수학,,,unassigned
+10302,10302,영어 발표와 토론,,,unassigned
+10302,10302,한문(폐강),,,unassigned
+10303,10303,사회문제 탐구,,,unassigned
+10303,10303,윤리와 사상,,,unassigned
+10303,10303,매체 의사소통,,,unassigned
+10303,10303,화법과 언어,a,화법과 언어_a_1,assigned
+10303,10303,영어Ⅱ,,,unassigned
+10303,10303,직무 의사소통,,,unassigned
+10303,10303,미술과 매체,,,unassigned
+10303,10303,현대사회와 윤리,,,unassigned
+10303,10303,기후변화와 환경생태,,,unassigned
+10303,10303,생태와 환경,c,생태와 환경_c_1,assigned
+10303,10303,윤리문제 탐구,,,unassigned
+10303,10303,정보,,,unassigned
+10303,10303,한국지리 탐구,,,unassigned
+10303,10303,교육의 이해,d,교육의 이해_d_1,assigned
+10303,10303,세계사,,,unassigned
+10303,10303,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10303,10303,세계 문화와 영어,,,unassigned
+10303,10303,세계시민과 지리,,,unassigned
+10303,10303,동아시아 역사 기행,,,unassigned
+10303,10303,언어생활 탐구,,,unassigned
+10303,10303,중국어(폐강),,,unassigned
+10304,10304,사회문제 탐구,,,unassigned
+10304,10304,윤리와 사상,a,윤리와 사상_a_1,assigned
+10304,10304,매체 의사소통,,,unassigned
+10304,10304,음악과 미디어,,,unassigned
+10304,10304,인간과 심리,c,인간과 심리_c_1,assigned
+10304,10304,직무 의사소통,,,unassigned
+10304,10304,사회와 문화,,,unassigned
+10304,10304,보건,,,unassigned
+10304,10304,미술과 매체,d,미술과 매체_d_1,assigned
+10304,10304,일본어,,,unassigned
+10304,10304,실생활 영어 회화,,,unassigned
+10304,10304,기후변화와 환경생태,,,unassigned
+10304,10304,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10304,10304,법과 사회,,,unassigned
+10304,10304,정치,,,unassigned
+10304,10304,문학과 영상,,,unassigned
+10304,10304,독서 토론과 글쓰기,,,unassigned
+10304,10304,한국지리 탐구,,,unassigned
+10304,10304,미술 창작,,,unassigned
+10304,10304,생물의 유전,,,unassigned
+10304,10304,미디어 영어,,,unassigned
+10304,10304,교육의 이해 [3-2-D],,,unassigned
+10305,10305,사회문제 탐구,,,unassigned
+10305,10305,윤리와 사상,,,unassigned
+10305,10305,매체 의사소통,c,매체 의사소통_c_1,assigned
+10305,10305,화법과 언어,,,unassigned
+10305,10305,영어Ⅱ,,,unassigned
+10305,10305,음악과 미디어,a,음악과 미디어_a_1,assigned
+10305,10305,인간과 심리,,,unassigned
+10305,10305,직무 의사소통,,,unassigned
+10305,10305,미술과 매체,,,unassigned
+10305,10305,현대사회와 윤리,,,unassigned
+10305,10305,실생활 영어 회화,,,unassigned
+10305,10305,주제 탐구 독서,,,unassigned
+10305,10305,직무 영어,,,unassigned
+10305,10305,인간과 철학,,,unassigned
+10305,10305,문학과 영상,,,unassigned
+10305,10305,독서 토론과 글쓰기,,,unassigned
+10305,10305,교육의 이해,d,교육의 이해_d_1,assigned
+10305,10305,세계사,,,unassigned
+10305,10305,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10305,10305,세계 문화와 영어,,,unassigned
+10305,10305,음악 연주와 창작,,,unassigned
+10305,10305,중국어(폐강),,,unassigned
+10306,10306,윤리와 사상,,,unassigned
+10306,10306,매체 의사소통,c,매체 의사소통_c_1,assigned
+10306,10306,화법과 언어,a,화법과 언어_a_1,assigned
+10306,10306,영어Ⅱ,,,unassigned
+10306,10306,음악과 미디어,,,unassigned
+10306,10306,인간과 심리,,,unassigned
+10306,10306,미술과 매체,d,미술과 매체_d_1,assigned
+10306,10306,일본어,,,unassigned
+10306,10306,실생활 영어 회화,,,unassigned
+10306,10306,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10306,10306,직무 영어,,,unassigned
+10306,10306,인간과 철학,,,unassigned
+10306,10306,생태와 환경,,,unassigned
+10306,10306,독서 토론과 글쓰기,,,unassigned
+10306,10306,미술 창작,,,unassigned
+10306,10306,미디어 영어,,,unassigned
+10306,10306,마케팅과 광고,,,unassigned
+10306,10306,세계 문화와 영어,,,unassigned
+10306,10306,동아시아 역사 기행,,,unassigned
+10306,10306,직무 수학,,,unassigned
+10306,10306,행성우주과학,,,unassigned
+10306,10306,역학과 에너지,,,unassigned
+10307,10307,사회문제 탐구,,,unassigned
+10307,10307,윤리와 사상,a,윤리와 사상_a_1,assigned
+10307,10307,매체 의사소통,c,매체 의사소통_c_1,assigned
+10307,10307,화법과 언어,,,unassigned
+10307,10307,보건,,,unassigned
+10307,10307,미술과 매체,d,미술과 매체_d_1,assigned
+10307,10307,현대사회와 윤리,,,unassigned
+10307,10307,기후변화와 환경생태,,,unassigned
+10307,10307,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10307,10307,인간과 철학,,,unassigned
+10307,10307,정보,,,unassigned
+10307,10307,과학의 역사와 문화,,,unassigned
+10307,10307,한국지리 탐구,,,unassigned
+10307,10307,미디어 영어,,,unassigned
+10307,10307,여행지리,,,unassigned
+10307,10307,세계사,,,unassigned
+10307,10307,지구과학,,,unassigned
+10307,10307,행성우주과학,,,unassigned
+10307,10307,언어생활 탐구,,,unassigned
+10307,10307,영어 발표와 토론,,,unassigned
+10307,10307,세계 문화와 영어 [3-2-D],,,unassigned
+10307,10307,중국어(폐강),,,unassigned
+10308,10308,사회문제 탐구,,,unassigned
+10308,10308,윤리와 사상,,,unassigned
+10308,10308,매체 의사소통,c,매체 의사소통_c_1,assigned
+10308,10308,화법과 언어,a,화법과 언어_a_1,assigned
+10308,10308,확률과 통계,,,unassigned
+10308,10308,직무 의사소통,,,unassigned
+10308,10308,사회와 문화,,,unassigned
+10308,10308,현대사회와 윤리,,,unassigned
+10308,10308,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10308,10308,법과 사회,,,unassigned
+10308,10308,인간과 철학,,,unassigned
+10308,10308,윤리문제 탐구,,,unassigned
+10308,10308,문학과 영상,,,unassigned
+10308,10308,인간과 경제활동,,,unassigned
+10308,10308,한국지리 탐구,,,unassigned
+10308,10308,교육의 이해,d,교육의 이해_d_1,assigned
+10308,10308,인문학과 윤리,,,unassigned
+10308,10308,미디어 영어,,,unassigned
+10308,10308,마케팅과 광고,,,unassigned
+10308,10308,경제 수학,,,unassigned
+10308,10308,직무 수학,,,unassigned
+10308,10308,중국어(폐강),,,unassigned
+10309,10309,사회문제 탐구,,,unassigned
+10309,10309,윤리와 사상,a,윤리와 사상_a_1,assigned
+10309,10309,매체 의사소통,,,unassigned
+10309,10309,음악과 미디어,,,unassigned
+10309,10309,사회와 문화,,,unassigned
+10309,10309,보건,,,unassigned
+10309,10309,현대사회와 윤리,,,unassigned
+10309,10309,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10309,10309,법과 사회,,,unassigned
+10309,10309,직무 영어,,,unassigned
+10309,10309,생태와 환경,c,생태와 환경_c_1,assigned
+10309,10309,정치,,,unassigned
+10309,10309,문학과 영상,,,unassigned
+10309,10309,인간과 경제활동,,,unassigned
+10309,10309,독서 토론과 글쓰기,,,unassigned
+10309,10309,한국지리 탐구,,,unassigned
+10309,10309,교육의 이해,d,교육의 이해_d_1,assigned
+10309,10309,미디어 영어,,,unassigned
+10309,10309,세계사,,,unassigned
+10309,10309,세계시민과 지리,,,unassigned
+10309,10309,직무 수학,,,unassigned
+10309,10309,영어 발표와 토론,,,unassigned
+10310,10310,윤리와 사상,a,윤리와 사상_a_1,assigned
+10310,10310,매체 의사소통,c,매체 의사소통_c_1,assigned
+10310,10310,화법과 언어,,,unassigned
+10310,10310,영어Ⅱ,,,unassigned
+10310,10310,인간과 심리,,,unassigned
+10310,10310,사회와 문화,,,unassigned
+10310,10310,미술과 매체,d,미술과 매체_d_1,assigned
+10310,10310,일본어,,,unassigned
+10310,10310,현대사회와 윤리,,,unassigned
+10310,10310,실생활 영어 회화,,,unassigned
+10310,10310,기후변화와 환경생태,,,unassigned
+10310,10310,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10310,10310,인간과 철학,,,unassigned
+10310,10310,정치,,,unassigned
+10310,10310,윤리문제 탐구,,,unassigned
+10310,10310,과학의 역사와 문화,,,unassigned
+10310,10310,인간과 경제활동,,,unassigned
+10310,10310,독서 토론과 글쓰기,,,unassigned
+10310,10310,미술 창작,,,unassigned
+10310,10310,인문학과 윤리,,,unassigned
+10310,10310,미디어 영어,,,unassigned
+10310,10310,영어 발표와 토론,,,unassigned
+10311,10311,매체 의사소통,c,매체 의사소통_c_1,assigned
+10311,10311,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10311,10311,확률과 통계,,,unassigned
+10311,10311,직무 의사소통,,,unassigned
+10311,10311,사회와 문화,,,unassigned
+10311,10311,보건,,,unassigned
+10311,10311,일본어,d,일본어_d_1,assigned
+10311,10311,실생활 영어 회화,,,unassigned
+10311,10311,인간과 철학,,,unassigned
+10311,10311,정보,,,unassigned
+10311,10311,문학과 영상,,,unassigned
+10311,10311,과학의 역사와 문화,,,unassigned
+10311,10311,인간과 경제활동,,,unassigned
+10311,10311,생명과학,,,unassigned
+10311,10311,독서 토론과 글쓰기,,,unassigned
+10311,10311,미술 창작,,,unassigned
+10311,10311,데이터 과학,,,unassigned
+10311,10311,여행지리,,,unassigned
+10311,10311,세포와 물질대사,,,unassigned
+10311,10311,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10311,10311,마케팅과 광고,,,unassigned
+10311,10311,세계 문화와 영어,,,unassigned
+10312,10312,윤리와 사상,a,윤리와 사상_a_1,assigned
+10312,10312,매체 의사소통,,,unassigned
+10312,10312,인간과 심리,c,인간과 심리_c_1,assigned
+10312,10312,확률과 통계,,,unassigned
+10312,10312,직무 의사소통,,,unassigned
+10312,10312,미술과 매체,,,unassigned
+10312,10312,주제 탐구 독서,,,unassigned
+10312,10312,인간과 철학,,,unassigned
+10312,10312,윤리문제 탐구,,,unassigned
+10312,10312,정보,d,정보_d_1,assigned
+10312,10312,인간과 경제활동,,,unassigned
+10312,10312,독서 토론과 글쓰기,,,unassigned
+10312,10312,미술 창작,,,unassigned
+10312,10312,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10312,10312,마케팅과 광고,,,unassigned
+10312,10312,수학과 문화,,,unassigned
+10312,10312,기하,,,unassigned
+10312,10312,인공지능 수학,,,unassigned
+10312,10312,물리학,,,unassigned
+10312,10312,경제 수학,,,unassigned
+10312,10312,직무 수학,,,unassigned
+10312,10312,역학과 에너지,,,unassigned
+10313,10313,윤리와 사상,c,윤리와 사상_c_1,assigned
+10313,10313,매체 의사소통,,,unassigned
+10313,10313,음악과 미디어,a,음악과 미디어_a_1,assigned
+10313,10313,인간과 심리,,,unassigned
+10313,10313,미술과 매체,,,unassigned
+10313,10313,실생활 영어 회화,,,unassigned
+10313,10313,기후변화와 환경생태,,,unassigned
+10313,10313,주제 탐구 독서,,,unassigned
+10313,10313,정치,,,unassigned
+10313,10313,문학과 영상,,,unassigned
+10313,10313,인간과 경제활동,,,unassigned
+10313,10313,독서 토론과 글쓰기,,,unassigned
+10313,10313,교육의 이해,d,교육의 이해_d_1,assigned
+10313,10313,미술 창작,,,unassigned
+10313,10313,인문학과 윤리,,,unassigned
+10313,10313,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10313,10313,마케팅과 광고,,,unassigned
+10313,10313,음악 연주와 창작,,,unassigned
+10313,10313,지구과학,,,unassigned
+10313,10313,지구시스템과학,,,unassigned
+10314,10314,사회문제 탐구,,,unassigned
+10314,10314,윤리와 사상,,,unassigned
+10314,10314,매체 의사소통,c,매체 의사소통_c_1,assigned
+10314,10314,화법과 언어,,,unassigned
+10314,10314,영어Ⅱ,,,unassigned
+10314,10314,음악과 미디어,a,음악과 미디어_a_1,assigned
+10314,10314,확률과 통계,,,unassigned
+10314,10314,사회와 문화,,,unassigned
+10314,10314,일본어,d,일본어_d_1,assigned
+10314,10314,실생활 영어 회화,,,unassigned
+10314,10314,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10314,10314,법과 사회,,,unassigned
+10314,10314,직무 영어,,,unassigned
+10314,10314,정치,,,unassigned
+10314,10314,정보,,,unassigned
+10314,10314,문학과 영상,,,unassigned
+10314,10314,과학의 역사와 문화,,,unassigned
+10314,10314,인간과 경제활동,,,unassigned
+10314,10314,생명과학,,,unassigned
+10314,10314,생물의 유전,,,unassigned
+10314,10314,데이터 과학,,,unassigned
+10314,10314,세포와 물질대사,,,unassigned
+10315,10315,영어Ⅱ,,,unassigned
+10315,10315,음악과 미디어,,,unassigned
+10315,10315,인간과 심리,c,인간과 심리_c_1,assigned
+10315,10315,확률과 통계,,,unassigned
+10315,10315,보건,a,보건_a_1,assigned
+10315,10315,미술과 매체,d,미술과 매체_d_1,assigned
+10315,10315,일본어,,,unassigned
+10315,10315,실생활 영어 회화,,,unassigned
+10315,10315,기후변화와 환경생태,,,unassigned
+10315,10315,생태와 환경,,,unassigned
+10315,10315,과학의 역사와 문화,,,unassigned
+10315,10315,생명과학,,,unassigned
+10315,10315,미술 창작,,,unassigned
+10315,10315,생물의 유전,,,unassigned
+10315,10315,미디어 영어,,,unassigned
+10315,10315,여행지리,,,unassigned
+10315,10315,세포와 물질대사,,,unassigned
+10315,10315,마케팅과 광고,,,unassigned
+10315,10315,세계 문화와 영어,,,unassigned
+10315,10315,수학과 문화,,,unassigned
+10315,10315,기하,,,unassigned
+10315,10315,미적분Ⅱ,b,미적분Ⅱ_b_1,assigned
+10316,10316,사회문제 탐구,,,unassigned
+10316,10316,윤리와 사상,a,윤리와 사상_a_1,assigned
+10316,10316,매체 의사소통,b,매체 의사소통_b_1,assigned
+10316,10316,화법과 언어,,,unassigned
+10316,10316,영어Ⅱ,,,unassigned
+10316,10316,음악과 미디어,c,음악과 미디어_c_1,assigned
+10316,10316,확률과 통계,,,unassigned
+10316,10316,사회와 문화,,,unassigned
+10316,10316,보건,,,unassigned
+10316,10316,일본어,d,일본어_d_1,assigned
+10316,10316,현대사회와 윤리,,,unassigned
+10316,10316,기후변화와 환경생태,,,unassigned
+10316,10316,주제 탐구 독서,,,unassigned
+10316,10316,법과 사회,,,unassigned
+10316,10316,정치,,,unassigned
+10316,10316,정보,,,unassigned
+10316,10316,과학의 역사와 문화,,,unassigned
+10316,10316,인간과 경제활동,,,unassigned
+10316,10316,생명과학,,,unassigned
+10316,10316,생물의 유전,,,unassigned
+10316,10316,세포와 물질대사,,,unassigned
+10316,10316,교육의 이해 [3-2-D],,,unassigned
+10317,10317,매체 의사소통,,,unassigned
+10317,10317,음악과 미디어,c,음악과 미디어_c_1,assigned
+10317,10317,확률과 통계,,,unassigned
+10317,10317,직무 의사소통,,,unassigned
+10317,10317,미술과 매체,d,미술과 매체_d_1,assigned
+10317,10317,생태와 환경,,,unassigned
+10317,10317,정보,,,unassigned
+10317,10317,과학의 역사와 문화,,,unassigned
+10317,10317,인간과 경제활동,,,unassigned
+10317,10317,미술 창작,,,unassigned
+10317,10317,데이터 과학,,,unassigned
+10317,10317,화학,,,unassigned
+10317,10317,물질과 에너지,a,물질과 에너지_a_1,assigned
+10317,10317,화학 반응의 세계,,,unassigned
+10317,10317,수학과 문화,,,unassigned
+10317,10317,기하,,,unassigned
+10317,10317,인공지능 수학,,,unassigned
+10317,10317,물리학,,,unassigned
+10317,10317,경제 수학,,,unassigned
+10317,10317,미적분Ⅱ,b,미적분Ⅱ_b_1,assigned
+10317,10317,역학과 에너지,,,unassigned
+10317,10317,전자기와 양자,,,unassigned
+10318,10318,사회문제 탐구,,,unassigned
+10318,10318,윤리와 사상,a,윤리와 사상_a_1,assigned
+10318,10318,매체 의사소통,,,unassigned
+10318,10318,화법과 언어,,,unassigned
+10318,10318,영어Ⅱ,,,unassigned
+10318,10318,음악과 미디어,c,음악과 미디어_c_1,assigned
+10318,10318,확률과 통계,,,unassigned
+10318,10318,사회와 문화,,,unassigned
+10318,10318,일본어,d,일본어_d_1,assigned
+10318,10318,실생활 영어 회화,,,unassigned
+10318,10318,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10318,10318,법과 사회,,,unassigned
+10318,10318,직무 영어,,,unassigned
+10318,10318,정치,,,unassigned
+10318,10318,정보,,,unassigned
+10318,10318,문학과 영상,,,unassigned
+10318,10318,과학의 역사와 문화,,,unassigned
+10318,10318,인간과 경제활동,,,unassigned
+10318,10318,생명과학,,,unassigned
+10318,10318,생물의 유전,,,unassigned
+10318,10318,데이터 과학,,,unassigned
+10318,10318,세포와 물질대사,,,unassigned
+10319,10319,윤리와 사상,d,윤리와 사상_d_1,assigned
+10319,10319,매체 의사소통,,,unassigned
+10319,10319,음악과 미디어,a,음악과 미디어_a_1,assigned
+10319,10319,인간과 심리,c,인간과 심리_c_1,assigned
+10319,10319,확률과 통계,,,unassigned
+10319,10319,보건,,,unassigned
+10319,10319,실생활 영어 회화,,,unassigned
+10319,10319,직무 영어,,,unassigned
+10319,10319,생태와 환경,,,unassigned
+10319,10319,과학의 역사와 문화,,,unassigned
+10319,10319,생명과학,,,unassigned
+10319,10319,생물의 유전,,,unassigned
+10319,10319,인문학과 윤리,,,unassigned
+10319,10319,데이터 과학,,,unassigned
+10319,10319,세포와 물질대사,,,unassigned
+10319,10319,화학,,,unassigned
+10319,10319,물질과 에너지,,,unassigned
+10319,10319,화학 반응의 세계,,,unassigned
+10319,10319,기하,,,unassigned
+10319,10319,교육의 이해 [3-2-D],,,unassigned
+10319,10319,미적분Ⅱ,b,미적분Ⅱ_b_1,assigned
+10319,10319,중국어(폐강),,,unassigned
+10320,10320,사회문제 탐구,,,unassigned
+10320,10320,윤리와 사상,,,unassigned
+10320,10320,매체 의사소통,c,매체 의사소통_c_1,assigned
+10320,10320,화법과 언어,b,화법과 언어_b_1,assigned
+10320,10320,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10320,10320,확률과 통계,,,unassigned
+10320,10320,사회와 문화,,,unassigned
+10320,10320,일본어,d,일본어_d_1,assigned
+10320,10320,현대사회와 윤리,,,unassigned
+10320,10320,기후변화와 환경생태,,,unassigned
+10320,10320,법과 사회,,,unassigned
+10320,10320,정치,,,unassigned
+10320,10320,윤리문제 탐구,,,unassigned
+10320,10320,정보,,,unassigned
+10320,10320,독서 토론과 글쓰기,,,unassigned
+10320,10320,데이터 과학,,,unassigned
+10320,10320,세계사,,,unassigned
+10320,10320,수학과 문화,,,unassigned
+10320,10320,기하,,,unassigned
+10320,10320,인공지능 수학,,,unassigned
+10320,10320,직무 수학,,,unassigned
+10320,10320,보건 [3-2-D],,,unassigned
+10321,10321,사회문제 탐구,,,unassigned
+10321,10321,윤리와 사상,c,윤리와 사상_c_1,assigned
+10321,10321,매체 의사소통,b,매체 의사소통_b_1,assigned
+10321,10321,화법과 언어,,,unassigned
+10321,10321,영어Ⅱ,,,unassigned
+10321,10321,확률과 통계,,,unassigned
+10321,10321,직무 의사소통,,,unassigned
+10321,10321,사회와 문화,,,unassigned
+10321,10321,보건,a,보건_a_1,assigned
+10321,10321,일본어,d,일본어_d_1,assigned
+10321,10321,현대사회와 윤리,,,unassigned
+10321,10321,법과 사회,,,unassigned
+10321,10321,정치,,,unassigned
+10321,10321,인간과 경제활동,,,unassigned
+10321,10321,독서 토론과 글쓰기,,,unassigned
+10321,10321,여행지리,,,unassigned
+10321,10321,세계사,,,unassigned
+10321,10321,음악 연주와 창작,,,unassigned
+10321,10321,인공지능 수학,,,unassigned
+10321,10321,직무 수학,,,unassigned
+10321,10321,교육의 이해 [3-2-D],,,unassigned
+10321,10321,언어생활 탐구,,,unassigned
+10322,10322,윤리와 사상,a,윤리와 사상_a_1,assigned
+10322,10322,보건,c,보건_c_1,assigned
+10322,10322,미술과 매체,,,unassigned
+10322,10322,일본어,d,일본어_d_1,assigned
+10322,10322,기후변화와 환경생태,,,unassigned
+10322,10322,법과 사회,,,unassigned
+10322,10322,정치,,,unassigned
+10322,10322,정보,,,unassigned
+10322,10322,생명과학,,,unassigned
+10322,10322,세계 문화와 영어,,,unassigned
+10322,10322,물질과 에너지,b,물질과 에너지_b_1,assigned
+10322,10322,동아시아 역사 기행,,,unassigned
+10322,10322,언어생활 탐구,,,unassigned
+10323,10323,윤리와 사상,d,윤리와 사상_d_1,assigned
+10323,10323,매체 의사소통,c,매체 의사소통_c_1,assigned
+10323,10323,영어Ⅱ,,,unassigned
+10323,10323,확률과 통계,,,unassigned
+10323,10323,직무 의사소통,,,unassigned
+10323,10323,사회와 문화,,,unassigned
+10323,10323,보건,a,보건_a_1,assigned
+10323,10323,미술과 매체,,,unassigned
+10323,10323,현대사회와 윤리,,,unassigned
+10323,10323,인간과 철학,,,unassigned
+10323,10323,윤리문제 탐구,,,unassigned
+10323,10323,과학의 역사와 문화,b,과학의 역사와 문화_b_1,assigned
+10323,10323,생명과학,,,unassigned
+10323,10323,생물의 유전,,,unassigned
+10323,10323,인문학과 윤리,,,unassigned
+10323,10323,세포와 물질대사,,,unassigned
+10323,10323,화학,,,unassigned
+10323,10323,물질과 에너지,,,unassigned
+10323,10323,화학 반응의 세계,,,unassigned
+10323,10323,물리학,,,unassigned
+10323,10323,교육의 이해 [3-2-D],,,unassigned
+10323,10323,보건 [3-2-D],,,unassigned
+10324,10324,사회문제 탐구,,,unassigned
+10324,10324,윤리와 사상,d,윤리와 사상_d_1,assigned
+10324,10324,매체 의사소통,c,매체 의사소통_c_1,assigned
+10324,10324,화법과 언어,a,화법과 언어_a_1,assigned
+10324,10324,인간과 심리,,,unassigned
+10324,10324,직무 의사소통,,,unassigned
+10324,10324,일본어,,,unassigned
+10324,10324,현대사회와 윤리,,,unassigned
+10324,10324,기후변화와 환경생태,,,unassigned
+10324,10324,법과 사회,,,unassigned
+10324,10324,생태와 환경,,,unassigned
+10324,10324,정치,,,unassigned
+10324,10324,윤리문제 탐구,,,unassigned
+10324,10324,문학과 영상,,,unassigned
+10324,10324,독서 토론과 글쓰기,,,unassigned
+10324,10324,교육의 이해,,,unassigned
+10324,10324,여행지리,,,unassigned
+10324,10324,세계사,,,unassigned
+10324,10324,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10324,10324,마케팅과 광고,,,unassigned
+10324,10324,세계 문화와 영어,,,unassigned
+10324,10324,음악 연주와 창작,,,unassigned
+10401,10401,사회문제 탐구,,,unassigned
+10401,10401,윤리와 사상,a,윤리와 사상_a_1,assigned
+10401,10401,매체 의사소통,,,unassigned
+10401,10401,영어Ⅱ,,,unassigned
+10401,10401,음악과 미디어,c,음악과 미디어_c_1,assigned
+10401,10401,확률과 통계,,,unassigned
+10401,10401,직무 의사소통,,,unassigned
+10401,10401,사회와 문화,,,unassigned
+10401,10401,미술과 매체,,,unassigned
+10401,10401,일본어,d,일본어_d_1,assigned
+10401,10401,주제 탐구 독서,,,unassigned
+10401,10401,정보,,,unassigned
+10401,10401,문학과 영상,,,unassigned
+10401,10401,인간과 경제활동,,,unassigned
+10401,10401,한국지리 탐구,,,unassigned
+10401,10401,미디어 영어,,,unassigned
+10401,10401,세계사,,,unassigned
+10401,10401,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10401,10401,마케팅과 광고,,,unassigned
+10401,10401,세계시민과 지리,,,unassigned
+10401,10401,직무 수학,,,unassigned
+10401,10401,보건 [3-2-D],,,unassigned
+10402,10402,사회문제 탐구,,,unassigned
+10402,10402,윤리와 사상,d,윤리와 사상_d_1,assigned
+10402,10402,화법과 언어,b,화법과 언어_b_1,assigned
+10402,10402,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10402,10402,확률과 통계,,,unassigned
+10402,10402,사회와 문화,,,unassigned
+10402,10402,보건,c,보건_c_1,assigned
+10402,10402,실생활 영어 회화,,,unassigned
+10402,10402,법과 사회,,,unassigned
+10402,10402,직무 영어,,,unassigned
+10402,10402,정치,,,unassigned
+10402,10402,정보,,,unassigned
+10402,10402,과학의 역사와 문화,,,unassigned
+10402,10402,인간과 경제활동,,,unassigned
+10402,10402,인문학과 윤리,,,unassigned
+10402,10402,데이터 과학,,,unassigned
+10402,10402,미디어 영어,,,unassigned
+10402,10402,세계 문화와 영어,,,unassigned
+10402,10402,인공지능 수학,,,unassigned
+10402,10402,교육의 이해 [3-2-D],,,unassigned
+10402,10402,지구시스템과학,,,unassigned
+10402,10402,세계 문화와 영어 [3-2-D],,,unassigned
+10403,10403,윤리와 사상,a,윤리와 사상_a_1,assigned
+10403,10403,화법과 언어,,,unassigned
+10403,10403,영어Ⅱ,,,unassigned
+10403,10403,확률과 통계,,,unassigned
+10403,10403,일본어,d,일본어_d_1,assigned
+10403,10403,현대사회와 윤리,,,unassigned
+10403,10403,실생활 영어 회화,,,unassigned
+10403,10403,기후변화와 환경생태,,,unassigned
+10403,10403,생태와 환경,c,생태와 환경_c_1,assigned
+10403,10403,과학의 역사와 문화,b,과학의 역사와 문화_b_1,assigned
+10403,10403,인간과 경제활동,,,unassigned
+10403,10403,생명과학,,,unassigned
+10403,10403,미술 창작,,,unassigned
+10403,10403,생물의 유전,,,unassigned
+10403,10403,미디어 영어,,,unassigned
+10403,10403,여행지리,,,unassigned
+10403,10403,세포와 물질대사,,,unassigned
+10403,10403,마케팅과 광고,,,unassigned
+10403,10403,화학,,,unassigned
+10403,10403,물질과 에너지,,,unassigned
+10403,10403,화학 반응의 세계,,,unassigned
+10403,10403,보건 [3-2-D],,,unassigned
+10404,10404,사회문제 탐구,,,unassigned
+10404,10404,매체 의사소통,b,매체 의사소통_b_1,assigned
+10404,10404,화법과 언어,,,unassigned
+10404,10404,영어Ⅱ,,,unassigned
+10404,10404,음악과 미디어,a,음악과 미디어_a_1,assigned
+10404,10404,인간과 심리,c,인간과 심리_c_1,assigned
+10404,10404,확률과 통계,,,unassigned
+10404,10404,직무 의사소통,,,unassigned
+10404,10404,사회와 문화,,,unassigned
+10404,10404,일본어,,,unassigned
+10404,10404,현대사회와 윤리,,,unassigned
+10404,10404,실생활 영어 회화,,,unassigned
+10404,10404,주제 탐구 독서,,,unassigned
+10404,10404,법과 사회,,,unassigned
+10404,10404,직무 영어,,,unassigned
+10404,10404,정치,,,unassigned
+10404,10404,문학과 영상,,,unassigned
+10404,10404,인간과 경제활동,,,unassigned
+10404,10404,독서 토론과 글쓰기,,,unassigned
+10404,10404,교육의 이해,d,교육의 이해_d_1,assigned
+10404,10404,세계사,,,unassigned
+10404,10404,역사로 탐구하는 현대 세계,,,unassigned
+10406,10406,사회문제 탐구,,,unassigned
+10406,10406,매체 의사소통,,,unassigned
+10406,10406,화법과 언어,,,unassigned
+10406,10406,영어Ⅱ,,,unassigned
+10406,10406,음악과 미디어,a,음악과 미디어_a_1,assigned
+10406,10406,인간과 심리,c,인간과 심리_c_1,assigned
+10406,10406,확률과 통계,,,unassigned
+10406,10406,직무 의사소통,,,unassigned
+10406,10406,사회와 문화,,,unassigned
+10406,10406,일본어,d,일본어_d_1,assigned
+10406,10406,현대사회와 윤리,,,unassigned
+10406,10406,실생활 영어 회화,,,unassigned
+10406,10406,주제 탐구 독서,,,unassigned
+10406,10406,법과 사회,,,unassigned
+10406,10406,직무 영어,,,unassigned
+10406,10406,정치,,,unassigned
+10406,10406,문학과 영상,,,unassigned
+10406,10406,인간과 경제활동,,,unassigned
+10406,10406,독서 토론과 글쓰기,,,unassigned
+10406,10406,교육의 이해,,,unassigned
+10406,10406,세계사,,,unassigned
+10406,10406,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10407,10407,사회문제 탐구,,,unassigned
+10407,10407,윤리와 사상,d,윤리와 사상_d_1,assigned
+10407,10407,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10407,10407,사회와 문화,,,unassigned
+10407,10407,보건,c,보건_c_1,assigned
+10407,10407,기후변화와 환경생태,,,unassigned
+10407,10407,법과 사회,,,unassigned
+10407,10407,인간과 철학,,,unassigned
+10407,10407,정치,,,unassigned
+10407,10407,윤리문제 탐구,,,unassigned
+10407,10407,과학의 역사와 문화,,,unassigned
+10407,10407,인간과 경제활동,,,unassigned
+10407,10407,한국지리 탐구,,,unassigned
+10407,10407,교육의 이해,,,unassigned
+10407,10407,미디어 영어,,,unassigned
+10407,10407,여행지리,,,unassigned
+10407,10407,세계사,,,unassigned
+10407,10407,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10407,10407,세계 문화와 영어,,,unassigned
+10407,10407,세계시민과 지리,,,unassigned
+10407,10407,음악 연주와 창작,,,unassigned
+10407,10407,동아시아 역사 기행,,,unassigned
+10408,10408,사회문제 탐구,,,unassigned
+10408,10408,화법과 언어,,,unassigned
+10408,10408,영어Ⅱ,,,unassigned
+10408,10408,인간과 심리,c,인간과 심리_c_1,assigned
+10408,10408,직무 의사소통,,,unassigned
+10408,10408,사회와 문화,,,unassigned
+10408,10408,보건,a,보건_a_1,assigned
+10408,10408,미술과 매체,,,unassigned
+10408,10408,현대사회와 윤리,,,unassigned
+10408,10408,실생활 영어 회화,,,unassigned
+10408,10408,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10408,10408,법과 사회,,,unassigned
+10408,10408,직무 영어,,,unassigned
+10408,10408,인간과 철학,,,unassigned
+10408,10408,윤리문제 탐구,,,unassigned
+10408,10408,생명과학,,,unassigned
+10408,10408,한국지리 탐구,,,unassigned
+10408,10408,교육의 이해,d,교육의 이해_d_1,assigned
+10408,10408,미디어 영어,,,unassigned
+10408,10408,여행지리,,,unassigned
+10408,10408,세계 문화와 영어,,,unassigned
+10408,10408,영어 발표와 토론,,,unassigned
+10409,10409,사회문제 탐구,,,unassigned
+10409,10409,매체 의사소통,,,unassigned
+10409,10409,화법과 언어,,,unassigned
+10409,10409,음악과 미디어,a,음악과 미디어_a_1,assigned
+10409,10409,인간과 심리,,,unassigned
+10409,10409,보건,c,보건_c_1,assigned
+10409,10409,미술과 매체,d,미술과 매체_d_1,assigned
+10409,10409,기후변화와 환경생태,,,unassigned
+10409,10409,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10409,10409,생태와 환경,,,unassigned
+10409,10409,정치,,,unassigned
+10409,10409,문학과 영상,,,unassigned
+10409,10409,과학의 역사와 문화,,,unassigned
+10409,10409,한국지리 탐구,,,unassigned
+10409,10409,교육의 이해,,,unassigned
+10409,10409,인문학과 윤리,,,unassigned
+10409,10409,여행지리,,,unassigned
+10409,10409,세계시민과 지리,,,unassigned
+10409,10409,지구과학,,,unassigned
+10409,10409,행성우주과학,,,unassigned
+10409,10409,도시의 미래 탐구,,,unassigned
+10409,10409,지구시스템과학,,,unassigned
+10410,10410,매체 의사소통,,,unassigned
+10410,10410,화법과 언어,a,화법과 언어_a_1,assigned
+10410,10410,음악과 미디어,c,음악과 미디어_c_1,assigned
+10410,10410,인간과 심리,,,unassigned
+10410,10410,확률과 통계,,,unassigned
+10410,10410,직무 의사소통,,,unassigned
+10410,10410,보건,,,unassigned
+10410,10410,미술과 매체,d,미술과 매체_d_1,assigned
+10410,10410,일본어,,,unassigned
+10410,10410,실생활 영어 회화,,,unassigned
+10410,10410,주제 탐구 독서,,,unassigned
+10410,10410,법과 사회,,,unassigned
+10410,10410,정보,,,unassigned
+10410,10410,과학의 역사와 문화,b,과학의 역사와 문화_b_1,assigned
+10410,10410,인간과 경제활동,,,unassigned
+10410,10410,독서 토론과 글쓰기,,,unassigned
+10410,10410,한국지리 탐구,,,unassigned
+10410,10410,여행지리,,,unassigned
+10410,10410,음악 연주와 창작,,,unassigned
+10410,10410,지구과학,,,unassigned
+10410,10410,행성우주과학,,,unassigned
+10410,10410,언어생활 탐구,,,unassigned
+10411,10411,사회문제 탐구,,,unassigned
+10411,10411,윤리와 사상,a,윤리와 사상_a_1,assigned
+10411,10411,매체 의사소통,b,매체 의사소통_b_1,assigned
+10411,10411,화법과 언어,,,unassigned
+10411,10411,영어Ⅱ,,,unassigned
+10411,10411,음악과 미디어,c,음악과 미디어_c_1,assigned
+10411,10411,인간과 심리,,,unassigned
+10411,10411,확률과 통계,,,unassigned
+10411,10411,직무 의사소통,,,unassigned
+10411,10411,사회와 문화,,,unassigned
+10411,10411,일본어,d,일본어_d_1,assigned
+10411,10411,현대사회와 윤리,,,unassigned
+10411,10411,법과 사회,,,unassigned
+10411,10411,직무 영어,,,unassigned
+10411,10411,인간과 철학,,,unassigned
+10411,10411,정치,,,unassigned
+10411,10411,인간과 경제활동,,,unassigned
+10411,10411,독서 토론과 글쓰기,,,unassigned
+10411,10411,한국지리 탐구,,,unassigned
+10411,10411,인문학과 윤리,,,unassigned
+10411,10411,세계사,,,unassigned
+10411,10411,언어생활 탐구,,,unassigned
+10412,10412,매체 의사소통,b,매체 의사소통_b_1,assigned
+10412,10412,화법과 언어,,,unassigned
+10412,10412,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10412,10412,인간과 심리,,,unassigned
+10412,10412,확률과 통계,,,unassigned
+10412,10412,사회와 문화,,,unassigned
+10412,10412,보건,,,unassigned
+10412,10412,실생활 영어 회화,,,unassigned
+10412,10412,기후변화와 환경생태,,,unassigned
+10412,10412,법과 사회,,,unassigned
+10412,10412,생태와 환경,c,생태와 환경_c_1,assigned
+10412,10412,정치,,,unassigned
+10412,10412,윤리문제 탐구,,,unassigned
+10412,10412,과학의 역사와 문화,,,unassigned
+10412,10412,인간과 경제활동,,,unassigned
+10412,10412,생명과학,d,생명과학_d_1,assigned
+10412,10412,미술 창작,,,unassigned
+10412,10412,생물의 유전,,,unassigned
+10412,10412,세포와 물질대사,,,unassigned
+10412,10412,화학,,,unassigned
+10412,10412,물질과 에너지,,,unassigned
+10412,10412,화학 반응의 세계,,,unassigned
+10413,10413,사회문제 탐구,,,unassigned
+10413,10413,윤리와 사상,a,윤리와 사상_a_1,assigned
+10413,10413,매체 의사소통,b,매체 의사소통_b_1,assigned
+10413,10413,화법과 언어,,,unassigned
+10413,10413,직무 의사소통,,,unassigned
+10413,10413,사회와 문화,,,unassigned
+10413,10413,보건,,,unassigned
+10413,10413,현대사회와 윤리,,,unassigned
+10413,10413,실생활 영어 회화,,,unassigned
+10413,10413,기후변화와 환경생태,,,unassigned
+10413,10413,법과 사회,,,unassigned
+10413,10413,인간과 철학,,,unassigned
+10413,10413,생태와 환경,c,생태와 환경_c_1,assigned
+10413,10413,정치,,,unassigned
+10413,10413,정보,d,정보_d_1,assigned
+10413,10413,생명과학,,,unassigned
+10413,10413,독서 토론과 글쓰기,,,unassigned
+10413,10413,한국지리 탐구,,,unassigned
+10413,10413,미술 창작,,,unassigned
+10413,10413,세포와 물질대사,,,unassigned
+10413,10413,마케팅과 광고,,,unassigned
+10413,10413,세계시민과 지리,,,unassigned
+10414,10414,사회문제 탐구,,,unassigned
+10414,10414,윤리와 사상,,,unassigned
+10414,10414,매체 의사소통,b,매체 의사소통_b_1,assigned
+10414,10414,음악과 미디어,a,음악과 미디어_a_1,assigned
+10414,10414,인간과 심리,c,인간과 심리_c_1,assigned
+10414,10414,직무 의사소통,,,unassigned
+10414,10414,사회와 문화,,,unassigned
+10414,10414,보건,,,unassigned
+10414,10414,미술과 매체,,,unassigned
+10414,10414,일본어,,,unassigned
+10414,10414,현대사회와 윤리,,,unassigned
+10414,10414,법과 사회,,,unassigned
+10414,10414,직무 영어,,,unassigned
+10414,10414,윤리문제 탐구,,,unassigned
+10414,10414,생명과학,,,unassigned
+10414,10414,독서 토론과 글쓰기,,,unassigned
+10414,10414,교육의 이해,d,교육의 이해_d_1,assigned
+10414,10414,생물의 유전,,,unassigned
+10414,10414,인문학과 윤리,,,unassigned
+10414,10414,여행지리,,,unassigned
+10414,10414,세포와 물질대사,,,unassigned
+10414,10414,경제 수학,,,unassigned
+10415,10415,사회문제 탐구,,,unassigned
+10415,10415,윤리와 사상,a,윤리와 사상_a_1,assigned
+10415,10415,매체 의사소통,b,매체 의사소통_b_1,assigned
+10415,10415,화법과 언어,,,unassigned
+10415,10415,영어Ⅱ,,,unassigned
+10415,10415,음악과 미디어,c,음악과 미디어_c_1,assigned
+10415,10415,인간과 심리,,,unassigned
+10415,10415,확률과 통계,,,unassigned
+10415,10415,직무 의사소통,,,unassigned
+10415,10415,사회와 문화,,,unassigned
+10415,10415,보건,,,unassigned
+10415,10415,일본어,d,일본어_d_1,assigned
+10415,10415,현대사회와 윤리,,,unassigned
+10415,10415,주제 탐구 독서,,,unassigned
+10415,10415,직무 영어,,,unassigned
+10415,10415,정치,,,unassigned
+10415,10415,인간과 경제활동,,,unassigned
+10415,10415,미디어 영어,,,unassigned
+10415,10415,여행지리,,,unassigned
+10415,10415,세계사,,,unassigned
+10415,10415,역사로 탐구하는 현대 세계,,,unassigned
+10415,10415,세계시민과 지리,,,unassigned
+10417,10417,사회문제 탐구,,,unassigned
+10417,10417,윤리와 사상,d,윤리와 사상_d_1,assigned
+10417,10417,매체 의사소통,,,unassigned
+10417,10417,화법과 언어,a,화법과 언어_a_1,assigned
+10417,10417,영어Ⅱ,,,unassigned
+10417,10417,음악과 미디어,c,음악과 미디어_c_1,assigned
+10417,10417,확률과 통계,,,unassigned
+10417,10417,직무 의사소통,,,unassigned
+10417,10417,사회와 문화,,,unassigned
+10417,10417,보건,,,unassigned
+10417,10417,현대사회와 윤리,,,unassigned
+10417,10417,실생활 영어 회화,,,unassigned
+10417,10417,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10417,10417,법과 사회,,,unassigned
+10417,10417,직무 영어,,,unassigned
+10417,10417,인간과 철학,,,unassigned
+10417,10417,정치,,,unassigned
+10417,10417,정보,,,unassigned
+10417,10417,문학과 영상,,,unassigned
+10417,10417,한국지리 탐구,,,unassigned
+10417,10417,인문학과 윤리,,,unassigned
+10417,10417,한문(폐강),,,unassigned
+10418,10418,매체 의사소통,,,unassigned
+10418,10418,화법과 언어,,,unassigned
+10418,10418,영어Ⅱ,,,unassigned
+10418,10418,음악과 미디어,a,음악과 미디어_a_1,assigned
+10418,10418,인간과 심리,c,인간과 심리_c_1,assigned
+10418,10418,확률과 통계,,,unassigned
+10418,10418,현대사회와 윤리,,,unassigned
+10418,10418,실생활 영어 회화,,,unassigned
+10418,10418,주제 탐구 독서,,,unassigned
+10418,10418,법과 사회,,,unassigned
+10418,10418,직무 영어,,,unassigned
+10418,10418,인간과 철학,,,unassigned
+10418,10418,생명과학,,,unassigned
+10418,10418,생물의 유전,,,unassigned
+10418,10418,데이터 과학,,,unassigned
+10418,10418,세포와 물질대사,,,unassigned
+10418,10418,화학,,,unassigned
+10418,10418,물질과 에너지,,,unassigned
+10418,10418,화학 반응의 세계,,,unassigned
+10418,10418,직무 수학,,,unassigned
+10418,10418,미적분Ⅱ,b,미적분Ⅱ_b_1,assigned
+10418,10418,보건 [3-2-D],d,보건 [3-2-D]_d_1,assigned
+10419,10419,사회문제 탐구,,,unassigned
+10419,10419,윤리와 사상,d,윤리와 사상_d_1,assigned
+10419,10419,화법과 언어,b,화법과 언어_b_1,assigned
+10419,10419,영어Ⅱ,,,unassigned
+10419,10419,음악과 미디어,c,음악과 미디어_c_1,assigned
+10419,10419,보건,a,보건_a_1,assigned
+10419,10419,미술과 매체,,,unassigned
+10419,10419,일본어,,,unassigned
+10419,10419,실생활 영어 회화,,,unassigned
+10419,10419,기후변화와 환경생태,,,unassigned
+10419,10419,직무 영어,,,unassigned
+10419,10419,인간과 철학,,,unassigned
+10419,10419,정보,,,unassigned
+10419,10419,문학과 영상,,,unassigned
+10419,10419,생명과학,,,unassigned
+10419,10419,독서 토론과 글쓰기,,,unassigned
+10419,10419,생물의 유전,,,unassigned
+10419,10419,미디어 영어,,,unassigned
+10419,10419,세포와 물질대사,,,unassigned
+10419,10419,세계 문화와 영어,,,unassigned
+10419,10419,세계시민과 지리,,,unassigned
+10419,10419,교육의 이해 [3-2-D],,,unassigned
+10420,10420,사회문제 탐구,,,unassigned
+10420,10420,윤리와 사상,d,윤리와 사상_d_1,assigned
+10420,10420,매체 의사소통,c,매체 의사소통_c_1,assigned
+10420,10420,화법과 언어,a,화법과 언어_a_1,assigned
+10420,10420,확률과 통계,,,unassigned
+10420,10420,직무 의사소통,,,unassigned
+10420,10420,사회와 문화,,,unassigned
+10420,10420,기후변화와 환경생태,,,unassigned
+10420,10420,윤리문제 탐구,,,unassigned
+10420,10420,정보,,,unassigned
+10420,10420,인간과 경제활동,,,unassigned
+10420,10420,한국지리 탐구,,,unassigned
+10420,10420,미술 창작,,,unassigned
+10420,10420,인문학과 윤리,,,unassigned
+10420,10420,데이터 과학,,,unassigned
+10420,10420,미디어 영어,,,unassigned
+10420,10420,여행지리,,,unassigned
+10420,10420,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10420,10420,마케팅과 광고,,,unassigned
+10420,10420,세계 문화와 영어,,,unassigned
+10420,10420,세계시민과 지리,,,unassigned
+10420,10420,동아시아 역사 기행,,,unassigned
+10421,10421,사회문제 탐구,,,unassigned
+10421,10421,윤리와 사상,,,unassigned
+10421,10421,매체 의사소통,,,unassigned
+10421,10421,화법과 언어,,,unassigned
+10421,10421,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10421,10421,음악과 미디어,,,unassigned
+10421,10421,인간과 심리,,,unassigned
+10421,10421,확률과 통계,,,unassigned
+10421,10421,직무 의사소통,,,unassigned
+10421,10421,사회와 문화,,,unassigned
+10421,10421,보건,c,보건_c_1,assigned
+10421,10421,일본어,d,일본어_d_1,assigned
+10421,10421,현대사회와 윤리,,,unassigned
+10421,10421,실생활 영어 회화,,,unassigned
+10421,10421,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10421,10421,법과 사회,,,unassigned
+10421,10421,직무 영어,,,unassigned
+10421,10421,인간과 철학,,,unassigned
+10421,10421,정치,,,unassigned
+10421,10421,문학과 영상,,,unassigned
+10421,10421,한국지리 탐구,,,unassigned
+10421,10421,인문학과 윤리,,,unassigned
+10422,10422,사회문제 탐구,,,unassigned
+10422,10422,윤리와 사상,c,윤리와 사상_c_1,assigned
+10422,10422,화법과 언어,b,화법과 언어_b_1,assigned
+10422,10422,음악과 미디어,a,음악과 미디어_a_1,assigned
+10422,10422,인간과 심리,,,unassigned
+10422,10422,확률과 통계,,,unassigned
+10422,10422,직무 의사소통,,,unassigned
+10422,10422,사회와 문화,,,unassigned
+10422,10422,기후변화와 환경생태,,,unassigned
+10422,10422,법과 사회,,,unassigned
+10422,10422,정치,,,unassigned
+10422,10422,윤리문제 탐구,,,unassigned
+10422,10422,문학과 영상,,,unassigned
+10422,10422,인간과 경제활동,,,unassigned
+10422,10422,한국지리 탐구,,,unassigned
+10422,10422,교육의 이해,d,교육의 이해_d_1,assigned
+10422,10422,미술 창작,,,unassigned
+10422,10422,세계사,,,unassigned
+10422,10422,마케팅과 광고,,,unassigned
+10422,10422,세계시민과 지리,,,unassigned
+10422,10422,동아시아 역사 기행,,,unassigned
+10422,10422,보건 [3-2-D],,,unassigned
+10424,10424,매체 의사소통,b,매체 의사소통_b_1,assigned
+10424,10424,직무 의사소통,,,unassigned
+10424,10424,보건,a,보건_a_1,assigned
+10424,10424,미술과 매체,,,unassigned
+10424,10424,일본어,d,일본어_d_1,assigned
+10424,10424,실생활 영어 회화,,,unassigned
+10424,10424,기후변화와 환경생태,,,unassigned
+10424,10424,법과 사회,,,unassigned
+10424,10424,인간과 철학,,,unassigned
+10424,10424,생태와 환경,c,생태와 환경_c_1,assigned
+10424,10424,정치,,,unassigned
+10424,10424,정보,,,unassigned
+10424,10424,문학과 영상,,,unassigned
+10424,10424,한국지리 탐구,,,unassigned
+10424,10424,교육의 이해,,,unassigned
+10424,10424,미술 창작,,,unassigned
+10424,10424,여행지리,,,unassigned
+10424,10424,마케팅과 광고,,,unassigned
+10424,10424,화학,,,unassigned
+10424,10424,화학 반응의 세계,,,unassigned
+10424,10424,음악 연주와 창작,,,unassigned
+10424,10424,동아시아 역사 기행,,,unassigned
+10501,10501,사회문제 탐구,,,unassigned
+10501,10501,윤리와 사상,d,윤리와 사상_d_1,assigned
+10501,10501,매체 의사소통,,,unassigned
+10501,10501,음악과 미디어,c,음악과 미디어_c_1,assigned
+10501,10501,인간과 심리,,,unassigned
+10501,10501,확률과 통계,,,unassigned
+10501,10501,직무 의사소통,,,unassigned
+10501,10501,사회와 문화,,,unassigned
+10501,10501,보건,a,보건_a_1,assigned
+10501,10501,미술과 매체,,,unassigned
+10501,10501,일본어,,,unassigned
+10501,10501,실생활 영어 회화,,,unassigned
+10501,10501,기후변화와 환경생태,,,unassigned
+10501,10501,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10501,10501,정치,,,unassigned
+10501,10501,독서 토론과 글쓰기,,,unassigned
+10501,10501,한국지리 탐구,,,unassigned
+10501,10501,인문학과 윤리,,,unassigned
+10501,10501,음악 연주와 창작,,,unassigned
+10501,10501,기하,,,unassigned
+10501,10501,물리학,,,unassigned
+10501,10501,교육의 이해 [3-2-D],,,unassigned
+10502,10502,사회문제 탐구,,,unassigned
+10502,10502,윤리와 사상,,,unassigned
+10502,10502,매체 의사소통,,,unassigned
+10502,10502,화법과 언어,a,화법과 언어_a_1,assigned
+10502,10502,영어Ⅱ,,,unassigned
+10502,10502,음악과 미디어,c,음악과 미디어_c_1,assigned
+10502,10502,확률과 통계,,,unassigned
+10502,10502,사회와 문화,,,unassigned
+10502,10502,일본어,d,일본어_d_1,assigned
+10502,10502,실생활 영어 회화,,,unassigned
+10502,10502,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10502,10502,법과 사회,,,unassigned
+10502,10502,직무 영어,,,unassigned
+10502,10502,정보,,,unassigned
+10502,10502,문학과 영상,,,unassigned
+10502,10502,과학의 역사와 문화,,,unassigned
+10502,10502,생명과학,,,unassigned
+10502,10502,생물의 유전,,,unassigned
+10502,10502,데이터 과학,,,unassigned
+10502,10502,세포와 물질대사,,,unassigned
+10502,10502,수학과 문화,,,unassigned
+10502,10502,경제 수학,,,unassigned
+10503,10503,사회문제 탐구,,,unassigned
+10503,10503,윤리와 사상,c,윤리와 사상_c_1,assigned
+10503,10503,매체 의사소통,,,unassigned
+10503,10503,화법과 언어,,,unassigned
+10503,10503,영어Ⅱ,,,unassigned
+10503,10503,음악과 미디어,a,음악과 미디어_a_1,assigned
+10503,10503,확률과 통계,,,unassigned
+10503,10503,사회와 문화,,,unassigned
+10503,10503,일본어,d,일본어_d_1,assigned
+10503,10503,실생활 영어 회화,,,unassigned
+10503,10503,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10503,10503,법과 사회,,,unassigned
+10503,10503,직무 영어,,,unassigned
+10503,10503,정보,,,unassigned
+10503,10503,문학과 영상,,,unassigned
+10503,10503,과학의 역사와 문화,,,unassigned
+10503,10503,생명과학,,,unassigned
+10503,10503,생물의 유전,,,unassigned
+10503,10503,데이터 과학,,,unassigned
+10503,10503,세포와 물질대사,,,unassigned
+10503,10503,수학과 문화,,,unassigned
+10503,10503,경제 수학,,,unassigned
+10504,10504,사회문제 탐구,,,unassigned
+10504,10504,윤리와 사상,a,윤리와 사상_a_1,assigned
+10504,10504,화법과 언어,,,unassigned
+10504,10504,영어Ⅱ,,,unassigned
+10504,10504,음악과 미디어,c,음악과 미디어_c_1,assigned
+10504,10504,인간과 심리,,,unassigned
+10504,10504,직무 의사소통,,,unassigned
+10504,10504,미술과 매체,d,미술과 매체_d_1,assigned
+10504,10504,일본어,,,unassigned
+10504,10504,실생활 영어 회화,,,unassigned
+10504,10504,기후변화와 환경생태,,,unassigned
+10504,10504,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10504,10504,법과 사회,,,unassigned
+10504,10504,인간과 철학,,,unassigned
+10504,10504,문학과 영상,,,unassigned
+10504,10504,독서 토론과 글쓰기,,,unassigned
+10504,10504,교육의 이해,,,unassigned
+10504,10504,미술 창작,,,unassigned
+10504,10504,미디어 영어,,,unassigned
+10504,10504,음악 연주와 창작,,,unassigned
+10504,10504,영어 발표와 토론,,,unassigned
+10504,10504,세계 문화와 영어 [3-2-D],,,unassigned
+10505,10505,사회문제 탐구,,,unassigned
+10505,10505,윤리와 사상,,,unassigned
+10505,10505,매체 의사소통,,,unassigned
+10505,10505,화법과 언어,,,unassigned
+10505,10505,인간과 심리,c,인간과 심리_c_1,assigned
+10505,10505,확률과 통계,,,unassigned
+10505,10505,직무 의사소통,,,unassigned
+10505,10505,보건,a,보건_a_1,assigned
+10505,10505,일본어,d,일본어_d_1,assigned
+10505,10505,현대사회와 윤리,,,unassigned
+10505,10505,인간과 철학,,,unassigned
+10505,10505,윤리문제 탐구,,,unassigned
+10505,10505,문학과 영상,,,unassigned
+10505,10505,과학의 역사와 문화,,,unassigned
+10505,10505,인문학과 윤리,,,unassigned
+10505,10505,데이터 과학,,,unassigned
+10505,10505,세계사,,,unassigned
+10505,10505,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10505,10505,지구과학,,,unassigned
+10505,10505,행성우주과학,,,unassigned
+10505,10505,지구시스템과학,,,unassigned
+10505,10505,보건 [3-2-D],,,unassigned
+10506,10506,사회문제 탐구,,,unassigned
+10506,10506,윤리와 사상,d,윤리와 사상_d_1,assigned
+10506,10506,매체 의사소통,,,unassigned
+10506,10506,화법과 언어,,,unassigned
+10506,10506,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10506,10506,음악과 미디어,c,음악과 미디어_c_1,assigned
+10506,10506,확률과 통계,,,unassigned
+10506,10506,사회와 문화,,,unassigned
+10506,10506,일본어,,,unassigned
+10506,10506,주제 탐구 독서,,,unassigned
+10506,10506,법과 사회,,,unassigned
+10506,10506,직무 영어,,,unassigned
+10506,10506,정보,,,unassigned
+10506,10506,문학과 영상,,,unassigned
+10506,10506,과학의 역사와 문화,,,unassigned
+10506,10506,데이터 과학,,,unassigned
+10506,10506,수학과 문화,,,unassigned
+10506,10506,물리학,,,unassigned
+10506,10506,미적분Ⅱ,b,미적분Ⅱ_b_1,assigned
+10506,10506,역학과 에너지,,,unassigned
+10506,10506,전자기와 양자,,,unassigned
+10507,10507,사회문제 탐구,,,unassigned
+10507,10507,윤리와 사상,,,unassigned
+10507,10507,매체 의사소통,c,매체 의사소통_c_1,assigned
+10507,10507,화법과 언어,b,화법과 언어_b_1,assigned
+10507,10507,영어Ⅱ,,,unassigned
+10507,10507,음악과 미디어,a,음악과 미디어_a_1,assigned
+10507,10507,확률과 통계,,,unassigned
+10507,10507,사회와 문화,,,unassigned
+10507,10507,보건,,,unassigned
+10507,10507,일본어,d,일본어_d_1,assigned
+10507,10507,법과 사회,,,unassigned
+10507,10507,직무 영어,,,unassigned
+10507,10507,생태와 환경,,,unassigned
+10507,10507,정보,,,unassigned
+10507,10507,과학의 역사와 문화,,,unassigned
+10507,10507,생명과학,,,unassigned
+10507,10507,생물의 유전,,,unassigned
+10507,10507,세포와 물질대사,,,unassigned
+10507,10507,화학,,,unassigned
+10507,10507,물질과 에너지,,,unassigned
+10507,10507,화학 반응의 세계,,,unassigned
+10507,10507,수학과 문화,,,unassigned
+10509,10509,사회문제 탐구,,,unassigned
+10509,10509,음악과 미디어,a,음악과 미디어_a_1,assigned
+10509,10509,보건,c,보건_c_1,assigned
+10509,10509,직무 영어,,,unassigned
+10509,10509,인간과 철학,,,unassigned
+10509,10509,윤리문제 탐구,,,unassigned
+10509,10509,정보,,,unassigned
+10509,10509,한국지리 탐구,,,unassigned
+10509,10509,교육의 이해,d,교육의 이해_d_1,assigned
+10509,10509,미술 창작,,,unassigned
+10509,10509,인문학과 윤리,,,unassigned
+10509,10509,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10509,10509,화학,,,unassigned
+10509,10509,물질과 에너지,,,unassigned
+10509,10509,화학 반응의 세계,,,unassigned
+10509,10509,수학과 문화,,,unassigned
+10509,10509,인공지능 수학,,,unassigned
+10509,10509,직무 수학,,,unassigned
+10509,10509,행성우주과학,,,unassigned
+10509,10509,언어생활 탐구,,,unassigned
+10509,10509,영어 발표와 토론,,,unassigned
+10509,10509,도시의 미래 탐구,,,unassigned
+10510,10510,윤리와 사상,a,윤리와 사상_a_1,assigned
+10510,10510,화법과 언어,b,화법과 언어_b_1,assigned
+10510,10510,음악과 미디어,c,음악과 미디어_c_1,assigned
+10510,10510,인간과 심리,,,unassigned
+10510,10510,직무 의사소통,,,unassigned
+10510,10510,미술과 매체,,,unassigned
+10510,10510,일본어,,,unassigned
+10510,10510,실생활 영어 회화,,,unassigned
+10510,10510,직무 영어,,,unassigned
+10510,10510,인간과 철학,,,unassigned
+10510,10510,정치,,,unassigned
+10510,10510,정보,,,unassigned
+10510,10510,문학과 영상,,,unassigned
+10510,10510,교육의 이해,d,교육의 이해_d_1,assigned
+10510,10510,미술 창작,,,unassigned
+10510,10510,데이터 과학,,,unassigned
+10510,10510,미디어 영어,,,unassigned
+10510,10510,여행지리,,,unassigned
+10510,10510,마케팅과 광고,,,unassigned
+10510,10510,세계 문화와 영어,,,unassigned
+10510,10510,인공지능 수학,,,unassigned
+10510,10510,보건 [3-2-D],,,unassigned
+10512,10512,사회문제 탐구,,,unassigned
+10512,10512,음악과 미디어,a,음악과 미디어_a_1,assigned
+10512,10512,인간과 심리,c,인간과 심리_c_1,assigned
+10512,10512,확률과 통계,,,unassigned
+10512,10512,보건,,,unassigned
+10512,10512,미술과 매체,,,unassigned
+10512,10512,기후변화와 환경생태,,,unassigned
+10512,10512,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10512,10512,생태와 환경,,,unassigned
+10512,10512,인간과 경제활동,,,unassigned
+10512,10512,생명과학,d,생명과학_d_1,assigned
+10512,10512,생물의 유전,,,unassigned
+10512,10512,데이터 과학,,,unassigned
+10512,10512,세포와 물질대사,,,unassigned
+10512,10512,화학,,,unassigned
+10512,10512,물질과 에너지,,,unassigned
+10512,10512,화학 반응의 세계,,,unassigned
+10512,10512,물리학,,,unassigned
+10512,10512,직무 수학,,,unassigned
+10512,10512,교육의 이해 [3-2-D],,,unassigned
+10512,10512,역학과 에너지,,,unassigned
+10512,10512,전자기와 양자,,,unassigned
+10513,10513,매체 의사소통,c,매체 의사소통_c_1,assigned
+10513,10513,화법과 언어,a,화법과 언어_a_1,assigned
+10513,10513,확률과 통계,,,unassigned
+10513,10513,사회와 문화,,,unassigned
+10513,10513,미술과 매체,d,미술과 매체_d_1,assigned
+10513,10513,현대사회와 윤리,,,unassigned
+10513,10513,실생활 영어 회화,,,unassigned
+10513,10513,기후변화와 환경생태,,,unassigned
+10513,10513,직무 영어,,,unassigned
+10513,10513,생태와 환경,,,unassigned
+10513,10513,정보,,,unassigned
+10513,10513,생명과학,,,unassigned
+10513,10513,한국지리 탐구,,,unassigned
+10513,10513,생물의 유전,,,unassigned
+10513,10513,여행지리,,,unassigned
+10513,10513,세계사,,,unassigned
+10513,10513,역사로 탐구하는 현대 세계,b,역사로 탐구하는 현대 세계_b_1,assigned
+10513,10513,세계시민과 지리,,,unassigned
+10513,10513,음악 연주와 창작,,,unassigned
+10513,10513,영어 발표와 토론,,,unassigned
+10513,10513,세계 문화와 영어 [3-2-D],,,unassigned
+10513,10513,한문(폐강),,,unassigned
+10514,10514,사회문제 탐구,,,unassigned
+10514,10514,윤리와 사상,d,윤리와 사상_d_1,assigned
+10514,10514,영어Ⅱ,a,영어Ⅱ_a_1,assigned
+10514,10514,확률과 통계,,,unassigned
+10514,10514,보건,,,unassigned
+10514,10514,미술과 매체,,,unassigned
+10514,10514,일본어,,,unassigned
+10514,10514,현대사회와 윤리,,,unassigned
+10514,10514,실생활 영어 회화,,,unassigned
+10514,10514,기후변화와 환경생태,,,unassigned
+10514,10514,법과 사회,,,unassigned
+10514,10514,인간과 철학,,,unassigned
+10514,10514,생태와 환경,c,생태와 환경_c_1,assigned
+10514,10514,정보,,,unassigned
+10514,10514,과학의 역사와 문화,b,과학의 역사와 문화_b_1,assigned
+10514,10514,생명과학,,,unassigned
+10514,10514,한국지리 탐구,,,unassigned
+10514,10514,미술 창작,,,unassigned
+10514,10514,생물의 유전,,,unassigned
+10514,10514,미디어 영어,,,unassigned
+10514,10514,세포와 물질대사,,,unassigned
+10514,10514,수학과 문화,,,unassigned
+10515,10515,사회문제 탐구,,,unassigned
+10515,10515,윤리와 사상,d,윤리와 사상_d_1,assigned
+10515,10515,화법과 언어,,,unassigned
+10515,10515,영어Ⅱ,,,unassigned
+10515,10515,음악과 미디어,a,음악과 미디어_a_1,assigned
+10515,10515,인간과 심리,c,인간과 심리_c_1,assigned
+10515,10515,확률과 통계,,,unassigned
+10515,10515,사회와 문화,,,unassigned
+10515,10515,보건,,,unassigned
+10515,10515,일본어,,,unassigned
+10515,10515,기후변화와 환경생태,,,unassigned
+10515,10515,법과 사회,,,unassigned
+10515,10515,인간과 경제활동,,,unassigned
+10515,10515,생명과학,,,unassigned
+10515,10515,독서 토론과 글쓰기,,,unassigned
+10515,10515,생물의 유전,,,unassigned
+10515,10515,세포와 물질대사,,,unassigned
+10515,10515,화학,,,unassigned
+10515,10515,물질과 에너지,b,물질과 에너지_b_1,assigned
+10515,10515,수학과 문화,,,unassigned
+10515,10515,직무 수학,,,unassigned
+10515,10515,세계 문화와 영어 [3-2-D],,,unassigned
+10517,10517,사회문제 탐구,,,unassigned
+10517,10517,윤리와 사상,a,윤리와 사상_a_1,assigned
+10517,10517,매체 의사소통,c,매체 의사소통_c_1,assigned
+10517,10517,화법과 언어,,,unassigned
+10517,10517,인간과 심리,,,unassigned
+10517,10517,미술과 매체,d,미술과 매체_d_1,assigned
+10517,10517,실생활 영어 회화,,,unassigned
+10517,10517,기후변화와 환경생태,,,unassigned
+10517,10517,주제 탐구 독서,,,unassigned
+10517,10517,인간과 철학,,,unassigned
+10517,10517,생태와 환경,,,unassigned
+10517,10517,문학과 영상,,,unassigned
+10517,10517,과학의 역사와 문화,b,과학의 역사와 문화_b_1,assigned
+10517,10517,독서 토론과 글쓰기,,,unassigned
+10517,10517,미술 창작,,,unassigned
+10517,10517,인문학과 윤리,,,unassigned
+10517,10517,데이터 과학,,,unassigned
+10517,10517,미디어 영어,,,unassigned
+10517,10517,마케팅과 광고,,,unassigned
+10517,10517,세계 문화와 영어,,,unassigned
+10517,10517,영어 발표와 토론,,,unassigned
+10517,10517,도시의 미래 탐구,,,unassigned
+10518,10518,사회문제 탐구,,,unassigned
+10518,10518,윤리와 사상,,,unassigned
+10518,10518,매체 의사소통,,,unassigned
+10518,10518,화법과 언어,a,화법과 언어_a_1,assigned
+10518,10518,영어Ⅱ,,,unassigned
+10518,10518,음악과 미디어,c,음악과 미디어_c_1,assigned
+10518,10518,확률과 통계,,,unassigned
+10518,10518,사회와 문화,,,unassigned
+10518,10518,일본어,d,일본어_d_1,assigned
+10518,10518,실생활 영어 회화,,,unassigned
+10518,10518,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10518,10518,법과 사회,,,unassigned
+10518,10518,직무 영어,,,unassigned
+10518,10518,정보,,,unassigned
+10518,10518,문학과 영상,,,unassigned
+10518,10518,과학의 역사와 문화,,,unassigned
+10518,10518,생명과학,,,unassigned
+10518,10518,생물의 유전,,,unassigned
+10518,10518,데이터 과학,,,unassigned
+10518,10518,세포와 물질대사,,,unassigned
+10518,10518,수학과 문화,,,unassigned
+10518,10518,경제 수학,,,unassigned
+10519,10519,윤리와 사상,d,윤리와 사상_d_1,assigned
+10519,10519,화법과 언어,,,unassigned
+10519,10519,음악과 미디어,a,음악과 미디어_a_1,assigned
+10519,10519,인간과 심리,c,인간과 심리_c_1,assigned
+10519,10519,확률과 통계,,,unassigned
+10519,10519,직무 의사소통,,,unassigned
+10519,10519,보건,,,unassigned
+10519,10519,현대사회와 윤리,,,unassigned
+10519,10519,기후변화와 환경생태,,,unassigned
+10519,10519,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10519,10519,인간과 철학,,,unassigned
+10519,10519,윤리문제 탐구,,,unassigned
+10519,10519,인간과 경제활동,,,unassigned
+10519,10519,생명과학,,,unassigned
+10519,10519,생물의 유전,,,unassigned
+10519,10519,인문학과 윤리,,,unassigned
+10519,10519,세포와 물질대사,,,unassigned
+10519,10519,화학,,,unassigned
+10519,10519,물질과 에너지,,,unassigned
+10519,10519,화학 반응의 세계,,,unassigned
+10519,10519,영어 발표와 토론,,,unassigned
+10519,10519,세계 문화와 영어 [3-2-D],,,unassigned
+10520,10520,사회문제 탐구,,,unassigned
+10520,10520,윤리와 사상,,,unassigned
+10520,10520,매체 의사소통,,,unassigned
+10520,10520,화법과 언어,b,화법과 언어_b_1,assigned
+10520,10520,영어Ⅱ,,,unassigned
+10520,10520,음악과 미디어,c,음악과 미디어_c_1,assigned
+10520,10520,확률과 통계,,,unassigned
+10520,10520,사회와 문화,,,unassigned
+10520,10520,보건,a,보건_a_1,assigned
+10520,10520,일본어,d,일본어_d_1,assigned
+10520,10520,법과 사회,,,unassigned
+10520,10520,직무 영어,,,unassigned
+10520,10520,생태와 환경,,,unassigned
+10520,10520,정보,,,unassigned
+10520,10520,과학의 역사와 문화,,,unassigned
+10520,10520,생명과학,,,unassigned
+10520,10520,생물의 유전,,,unassigned
+10520,10520,세포와 물질대사,,,unassigned
+10520,10520,화학,,,unassigned
+10520,10520,물질과 에너지,,,unassigned
+10520,10520,화학 반응의 세계,,,unassigned
+10520,10520,수학과 문화,,,unassigned
+10522,10522,화법과 언어,,,unassigned
+10522,10522,영어Ⅱ,,,unassigned
+10522,10522,음악과 미디어,a,음악과 미디어_a_1,assigned
+10522,10522,인간과 심리,,,unassigned
+10522,10522,확률과 통계,,,unassigned
+10522,10522,보건,,,unassigned
+10522,10522,실생활 영어 회화,,,unassigned
+10522,10522,기후변화와 환경생태,,,unassigned
+10522,10522,생태와 환경,c,생태와 환경_c_1,assigned
+10522,10522,윤리문제 탐구,,,unassigned
+10522,10522,과학의 역사와 문화,,,unassigned
+10522,10522,생명과학,d,생명과학_d_1,assigned
+10522,10522,생물의 유전,,,unassigned
+10522,10522,인문학과 윤리,,,unassigned
+10522,10522,여행지리,,,unassigned
+10522,10522,세포와 물질대사,,,unassigned
+10522,10522,화학,,,unassigned
+10522,10522,물질과 에너지,,,unassigned
+10522,10522,화학 반응의 세계,,,unassigned
+10522,10522,기하,,,unassigned
+10522,10522,인공지능 수학,,,unassigned
+10522,10522,미적분Ⅱ,b,미적분Ⅱ_b_1,assigned
+10523,10523,사회문제 탐구,,,unassigned
+10523,10523,매체 의사소통,,,unassigned
+10523,10523,화법과 언어,a,화법과 언어_a_1,assigned
+10523,10523,인간과 심리,c,인간과 심리_c_1,assigned
+10523,10523,직무 의사소통,,,unassigned
+10523,10523,보건,,,unassigned
+10523,10523,미술과 매체,,,unassigned
+10523,10523,일본어,d,일본어_d_1,assigned
+10523,10523,현대사회와 윤리,,,unassigned
+10523,10523,주제 탐구 독서,b,주제 탐구 독서_b_1,assigned
+10523,10523,인간과 철학,,,unassigned
+10523,10523,윤리문제 탐구,,,unassigned
+10523,10523,정보,,,unassigned
+10523,10523,과학의 역사와 문화,,,unassigned
+10523,10523,교육의 이해,,,unassigned
+10523,10523,생물의 유전,,,unassigned
+10523,10523,세계사,,,unassigned
+10523,10523,역사로 탐구하는 현대 세계,,,unassigned
+10523,10523,행성우주과학,,,unassigned
+10523,10523,지구시스템과학,,,unassigned
+10523,10523,한문(폐강),,,unassigned

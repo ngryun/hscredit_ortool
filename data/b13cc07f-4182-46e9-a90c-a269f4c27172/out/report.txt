@@ -1,0 +1,20 @@
+=== Optimization Report (OR-Tools CP-SAT) ===
+Solver status: FEASIBLE
+Students: 110 | Subjects: 68
+Slots: 10 | Rooms/slot: 7 | Extra allowed/slot: 1
+
+Total assignments: 1090
+Total unassigned (student-subject pairs): 1285
+Students with at least one unassigned: 109
+
+Slot usage:
+  - slot a: sections_open=8 (limit=7)
+  - slot b: sections_open=8 (limit=7)
+  - slot c: sections_open=8 (limit=7)
+  - slot d: sections_open=8 (limit=7)
+  - slot e: sections_open=8 (limit=7)
+  - slot f: sections_open=8 (limit=7)
+  - slot g: sections_open=7 (limit=7)
+  - slot h: sections_open=8 (limit=7)
+  - slot i: sections_open=8 (limit=7)
+  - slot j: sections_open=8 (limit=7)
