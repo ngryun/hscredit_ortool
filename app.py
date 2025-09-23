@@ -3,6 +3,7 @@ import asyncio, uuid, subprocess
 from pathlib import Path
 from fastapi import FastAPI, UploadFile, Form
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 import pandas as pd
 import io
 import warnings
@@ -16,6 +17,8 @@ warnings.filterwarnings(
 
 app = FastAPI()
 BASE = Path("data"); BASE.mkdir(exist_ok=True, parents=True)
+# Serve static assets (mascot video)
+app.mount("/asset", StaticFiles(directory="asset"), name="asset")
 
 # ← 여기 숫자만 조절하면 동시 실행 개수 제한 가능 (예: 2~3)
 MAX_CONCURRENT = 8
@@ -169,10 +172,7 @@ def index():
                 <select id=\"group-select\" name=\"group\" class=\"w-full rounded-lg border border-stone-300 p-2 bg-white\"></select>
                 <p class=\"mt-1 text-xs text-stone-500\">선택그룹이 여러 개 감지되었습니다. 이동반 편성하고자 하는 선택그룹을 선택해주세요.</p>
               </div>
-              <div id=\"inspect-wrap\" class=\"mb-4 hidden\"> 
-                <div class=\"text-sm text-stone-700 font-medium mb-1\">업로드 미리보기</div>
-                <div id=\"inspect-body\" class=\"text-sm text-stone-600 bg-sage-50 border border-sage-200 rounded-lg p-3 max-h-56 overflow-y-auto\"></div>
-              </div>
+              
               <div class=\"grid grid-cols-1 md:grid-cols-3 gap-3\">
                 <div>
                   <label class=\"block text-sm text-stone-700 mb-1\">slots</label>
@@ -211,11 +211,16 @@ def index():
             </div>
             <div id=\"status-note\" class=\"text-sm text-stone-500\">실행하면 여기에서 진행상황과 다운로드 링크가 표시됩니다.</div>
             <div id=\"job-info\" class=\"mt-2 text-sm text-stone-600 hidden\"></div>
-            <div id=\"downloads\" class=\"mt-4 space-x-2 hidden\"></div>
+            <div id=\"mascot\" class=\"mt-4 hidden flex justify-center items-center gap-4\">
+              <video src=\"/asset/beori2.mp4\" autoplay loop muted playsinline class=\"w-36 h-36 md:w-40 md:h-40 object-contain rounded-lg shadow-sm ring-1 ring-sage-200\"></video>
+              <video src=\"/asset/beori.mp4\" autoplay loop muted playsinline class=\"w-36 h-36 md:w-40 md:h-40 object-contain rounded-lg shadow-sm ring-1 ring-sage-200\"></video>
+              </div>
+              <div id=\"downloads\" class=\"mt-4 space-x-2 hidden\"></div>
             <div id=\"pivot-wrap\" class=\"mt-6 hidden overflow-x-auto\">
               <table id=\"pivot-table\" class=\"min-w-full text-sm\"></table>
             </div>
             <pre id=\"error-box\" class=\"mt-4 hidden text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3 whitespace-pre-wrap\"></pre>
+            
           </div>
         </section>
 
@@ -237,11 +242,17 @@ def index():
         const inputFile = form.querySelector('input[name="xlsx"]');
         const groupRow = document.getElementById('group-row');
         const groupSel = document.getElementById('group-select');
-        const inspectWrap = document.getElementById('inspect-wrap');
-        const inspectBody = document.getElementById('inspect-body');
+        const mascot = document.getElementById('mascot');
+        // Preview UI is removed; provide safe dummies for legacy code paths
+        const inspectWrap = {{ classList: {{ add: ()=>{{}}, remove: ()=>{{}} }} }};
+        const inspectBody = {{ innerHTML: '' }};
         let pollTimer = null;
         let pivotData = null;
+        let lastInspect = null;
         let sortAsc = false; // sort by Total (desc by default)
+        let runStartMs = null;    // client-side ticking timer
+        let tickTimer = null;     // interval handle for elapsed seconds
+        let lastProgress = null;  // latest progress payload
 
         function setStatus(text, color='sage') {{
           statusBadge.textContent = text;
@@ -322,6 +333,31 @@ def index():
           drawPivot();
         }}
 
+        // Preview: Subject, 총인원, slots columns filled with 0
+        function renderSubjectPreview(info) {{
+          try {{
+            const subs = Array.isArray(info?.subjects) ? info.subjects : [];
+            const slots = Number(form.querySelector('input[name="slots"]').value || 4);
+            const labels = 'abcdefghijklmnopqrstuvwxyz'.slice(0, Math.max(0, slots)).split('');
+            if (!subs.length) {{ pivotWrap.classList.add('hidden'); pivotTable.innerHTML=''; return; }}
+            let thead = '<tr>' +
+              '<th class="px-3 py-2 text-left text-stone-700 border-b border-stone-200">Subject</th>' +
+              '<th class="px-3 py-2 text-right text-stone-700 border-b border-stone-200">총인원</th>';
+            for (const lb of labels) {{ thead += `<th class=\"px-3 py-2 text-right text-stone-700 border-b border-stone-200\">${{lb}}</th>`; }}
+            thead += '</tr>';
+            const rows = subs.map(s => {{
+              const total = Number(s.count||0).toLocaleString();
+              let cells = '';
+              cells += `<td class=\"px-3 py-1 text-left border-b border-stone-100\">${{s.name}}</td>`;
+              cells += `<td class=\"px-3 py-1 text-right border-b border-stone-100\">${{total}}</td>`;
+              for (const _ of labels) {{ cells += `<td class=\"px-3 py-1 text-right border-b border-stone-100\">0</td>`; }}
+              return `<tr class=\"odd:bg-white even:bg-sage-50\">${{cells}}</tr>`;
+            }}).join('');
+            pivotTable.innerHTML = `<thead class=\"bg-sage-100\">${{thead}}</thead><tbody>${{rows}}</tbody>`;
+            pivotWrap.classList.remove('hidden');
+          }} catch (err) {{ console.warn('preview render error', err); }}
+        }}
+
         // Inspect uploaded file for quick preview (groups, semesters, subjects, headcount)
         async function inspectFile(file) {{
           const fd = new FormData();
@@ -340,6 +376,35 @@ def index():
           try {{
             const info = await inspectFile(f);
             const groups = (info && Array.isArray(info.groups)) ? info.groups : [];
+            // Suggest rooms by class_count
+            const roomsInp = form.querySelector('input[name="rooms"]');
+            if (roomsInp && Number(info?.class_count||0) > 0) roomsInp.value = String(Number(info.class_count));
+            // Cache and render preview
+            lastInspect = info;
+            renderSubjectPreview(lastInspect);
+            // Inline preview (kept for backward-compat; ensure braces escaped in f-string)
+            try {{
+              const subs = Array.isArray(info?.subjects) ? info.subjects : [];
+              const slots = Number(form.querySelector('input[name="slots"]').value || 4);
+              const labels = 'abcdefghijklmnopqrstuvwxyz'.slice(0, Math.max(0, slots)).split('');
+              if (subs.length) {{
+                let thead = '<tr>' +
+                  '<th class="px-3 py-2 text-left text-stone-700 border-b border-stone-200">Subject</th>' +
+                  '<th class="px-3 py-2 text-right text-stone-700 border-b border-stone-200">총인원</th>';
+                for (const lb of labels) {{ thead += `<th class=\"px-3 py-2 text-right text-stone-700 border-b border-stone-200\">${{lb}}</th>`; }}
+                thead += '</tr>';
+                const rows = subs.map(s => {{
+                  const total = Number(s.count||0).toLocaleString();
+                  let cells = '';
+                  cells += `<td class=\"px-3 py-1 text-left border-b border-stone-100\">${{s.name}}</td>`;
+                  cells += `<td class=\"px-3 py-1 text-right border-b border-stone-100\">${{total}}</td>`;
+                  for (const _ of labels) {{ cells += `<td class=\"px-3 py-1 text-right border-b border-stone-100\">0</td>`; }}
+                  return `<tr class=\"odd:bg-white even:bg-sage-50\">${{cells}}</tr>`;
+                }}).join('');
+                pivotTable.innerHTML = `<thead class=\"bg-sage-100\">${{thead}}</thead><tbody>${{rows}}</tbody>`;
+                pivotWrap.classList.remove('hidden');
+              }}
+            }} catch (err) {{ console.warn('preview render error', err); }}
             // Render preview summary
             if (info) {{
               const head = Number(info.headcount || 0).toLocaleString();
@@ -386,6 +451,14 @@ def index():
           }}
         }});
 
+        // Re-render preview when slots value changes
+        const slotsInp = form.querySelector('input[name="slots"]');
+        if (slotsInp) {{
+          const rerender = () => {{ if (lastInspect) renderSubjectPreview(lastInspect); }};
+          slotsInp.addEventListener('input', rerender);
+          slotsInp.addEventListener('change', rerender);
+        }}
+
         form.addEventListener('submit', async (e) => {{
           e.preventDefault();
           clearDownloads();
@@ -407,10 +480,37 @@ def index():
               const js = await st.json();
               if (js.status === 'RUNNING') {{
                 setStatus('RUNNING');
-                statusNote.textContent = '최적화 진행 중...';
+                if (mascot) mascot.classList.remove('hidden');
+                if (js.progress) {{ lastProgress = js.progress; }}
+                if (runStartMs === null) {{
+                  runStartMs = Date.now();
+                  if (tickTimer) {{ clearInterval(tickTimer); tickTimer = null; }}
+                  tickTimer = setInterval(() => {{
+                    const secs = ((Date.now() - runStartMs) / 1000).toFixed(1);
+                    const sols = (lastProgress && lastProgress.solutions !== undefined) ? Number(lastProgress.solutions||0).toLocaleString() : '0';
+                    const ua = (lastProgress && lastProgress.unassigned !== undefined) ? ', 미배정 ' + Number(lastProgress.unassigned||0).toLocaleString() : '';
+                    statusNote.textContent = `계산 중 · ${{secs}}s · 솔루션 ${{sols}}${{ua}}`;
+                  }}, 200);
+                }} else if (js.progress) {{
+                  // refresh cached numbers even if timer already running
+                  lastProgress = js.progress;
+                }}
+                // Immediate text update (before next tick)
+                const secsNow = ((runStartMs ? (Date.now() - runStartMs) : 0) / 1000).toFixed(1);
+                const solsNow = (lastProgress && lastProgress.solutions !== undefined) ? Number(lastProgress.solutions||0).toLocaleString() : '0';
+                const uaNow = (lastProgress && lastProgress.unassigned !== undefined) ? ', 미배정 ' + Number(lastProgress.unassigned||0).toLocaleString() : '';
+                statusNote.textContent = `계산 중 · ${{secsNow}}s · 솔루션 ${{solsNow}}${{uaNow}}`;
               }} else if (js.status === 'DONE') {{
                 setStatus('DONE');
-                statusNote.textContent = '완료되었습니다. 아래 파일을 다운로드하세요.';
+                if (mascot) mascot.classList.add('hidden');
+                if (tickTimer) {{ clearInterval(tickTimer); tickTimer = null; }}
+                runStartMs = null; lastProgress = null;
+                if (js.summary && js.summary.total_unassigned !== undefined) {{
+                  const ua = Number(js.summary.total_unassigned||0).toLocaleString();
+                  statusNote.textContent = `미배정 ${{ua}}명으로 최종 완료했습니다.`;
+                }} else {{
+                  statusNote.textContent = '완료되었습니다. 아래 파일을 다운로드하세요.';
+                }}
                 clearInterval(pollTimer);
                 downloads.classList.remove('hidden');
                 downloads.innerHTML = `
@@ -422,6 +522,9 @@ def index():
                 submitBtn.disabled = false;
               }} else if (js.status === 'ERROR') {{
                 setStatus('ERROR', 'rose');
+                if (mascot) mascot.classList.add('hidden');
+                if (tickTimer) {{ clearInterval(tickTimer); tickTimer = null; }}
+                runStartMs = null; lastProgress = null;
                 statusNote.textContent = '오류가 발생했습니다.';
                 errBox.textContent = js.error || 'Unknown error';
                 errBox.classList.remove('hidden');
@@ -430,6 +533,9 @@ def index():
                 submitBtn.disabled = false;
               }} else if (js.status === 'PENDING') {{
                 setStatus('PENDING');
+                if (mascot) mascot.classList.add('hidden');
+                if (tickTimer) {{ clearInterval(tickTimer); tickTimer = null; }}
+                runStartMs = null; lastProgress = null;
                 statusNote.textContent = '대기 중...';
               }}
             }}, 2000);
@@ -471,15 +577,60 @@ async def run_optimizer(job_id: str, xlsx_path: Path, out_dir: Path,
         proc = await asyncio.create_subprocess_exec(
             *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
-        out, err = await proc.communicate()
+        # Stream stdout to capture progress
+        async def read_stdout():
+            try:
+                while True:
+                    line = await proc.stdout.readline()
+                    if not line:
+                        break
+                    txt = line.decode(errors="ignore").strip()
+                    if txt.startswith("[PROGRESS]"):
+                        import json as _json
+                        try:
+                            js = _json.loads(txt[len("[PROGRESS]"):].strip())
+                            JOBS[job_id]["progress"] = js
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+        async def read_stderr():
+            try:
+                JOBS[job_id]["_stderr"] = b""
+                while True:
+                    line = await proc.stderr.readline()
+                    if not line:
+                        break
+                    JOBS[job_id]["_stderr"] += line
+            except Exception:
+                pass
+
+        await asyncio.gather(read_stdout(), read_stderr())
+        await proc.wait()
         if proc.returncode == 0:
             JOBS[job_id]["status"] = "DONE"
             # Build pivot for quick UI preview
             assignments_csv = out_dir / "assignments.csv"
             JOBS[job_id]["pivot"] = build_pivot(assignments_csv)
+            # Compute simple summary metrics
+            try:
+                if assignments_csv.exists():
+                    df_asg = pd.read_csv(assignments_csv)
+                    total_unassigned = int((df_asg.get("status") == "unassigned").sum())
+                    students_with_unassigned = int(df_asg[df_asg.get("status") == "unassigned"]["student_id"].nunique())
+                    total_assigned = int((df_asg.get("status") == "assigned").sum())
+                    JOBS[job_id]["summary"] = {
+                        "total_unassigned": total_unassigned,
+                        "students_with_unassigned": students_with_unassigned,
+                        "total_assigned": total_assigned,
+                    }
+            except Exception:
+                pass
         else:
             JOBS[job_id]["status"] = "ERROR"
-            JOBS[job_id]["error"] = err.decode(errors="ignore")
+            err = JOBS[job_id].get("_stderr", b"")
+            JOBS[job_id]["error"] = (err or b"").decode(errors="ignore")
 
 @app.post("/run")
 async def run(
@@ -510,6 +661,12 @@ def job_status(job_id: str):
     if not info:
         return JSONResponse(status_code=404, content={"error": "job not found"})
     resp = {"job": job_id, "status": info["status"]}
+    if info.get("progress"):
+        resp["progress"] = info["progress"]
+    if info.get("progress"):
+        resp["progress"] = info["progress"]
+    if info.get("summary"):
+        resp["summary"] = info["summary"]
     if info["status"] == "DONE":
         resp.update({
             "sections": f"/download/{job_id}/sections_plan.csv",
@@ -550,6 +707,12 @@ async def inspect(xlsx: UploadFile):
             subj_cols = df.columns[2:]
             # headcount = non-empty id rows
             headcount = int(df[id_col].notna().sum())
+            # class_count from 5-digit student id: class = 3rd digit (index 2)
+            classes = set()
+            for v in df[id_col].dropna().astype(str):
+                s = "".join(ch for ch in str(v) if ch.isdigit())
+                if len(s) >= 3:
+                    classes.add(s[2])
             subjects = []
             for c in subj_cols:
                 sname = str(c).strip()
@@ -560,12 +723,12 @@ async def inspect(xlsx: UploadFile):
                     cnt = int((col.astype(str).str.strip() == '1').sum())
                 subjects.append({"name": sname, "count": cnt})
             subjects.sort(key=lambda x: (-x["count"], x["name"]))
-            return {"groups": [], "semesters": [], "subjects": subjects, "headcount": headcount}
+            return {"groups": [], "semesters": [], "subjects": subjects, "headcount": headcount, "class_count": len(classes)}
 
         # New headered layout
         df0 = pd.read_excel(io.BytesIO(content), sheet_name=0, header=None)
         if df0.shape[0] < 6 or df0.shape[1] < 5:
-            return {"groups": [], "semesters": [], "subjects": [], "headcount": 0}
+            return {"groups": [], "semesters": [], "subjects": [], "headcount": 0, "class_count": 0}
         COL_A, COL_B, COL_C, COL_E = 0, 1, 2, 4
         ROW_SEM, ROW_GRP, ROW_SUBJ, ROW_DATA = 1, 2, 3, 5
         sem_row = df0.iloc[ROW_SEM, COL_E:]
@@ -598,8 +761,9 @@ async def inspect(xlsx: UploadFile):
                 cnt = int((col.astype(str).str.strip() == '1').sum())
             subj_counts.append({"name": subj, "count": cnt})
         subj_counts.sort(key=lambda x: (-x["count"], x["name"]))
-        # headcount by student id across A/B/C
+        # headcount and class_count by student id across A/B/C
         headcount = 0
+        classes = set()
         for i in range(ROW_DATA, df0.shape[0]):
             vals = []
             for ci in (COL_C, COL_B, COL_A):
@@ -612,10 +776,14 @@ async def inspect(xlsx: UploadFile):
                 vals.append(s)
             if vals:
                 headcount += 1
+                sid = vals[0]
+                sd = "".join(ch for ch in str(sid) if ch.isdigit())
+                if len(sd) >= 3:
+                    classes.add(sd[2])
         uniq_groups = sorted({g for g in grps if g})
         uniq_sems = sorted({s for s in sems if s})
-        return {"groups": uniq_groups, "semesters": uniq_sems, "subjects": subj_counts, "headcount": headcount}
+        return {"groups": uniq_groups, "semesters": uniq_sems, "subjects": subj_counts, "headcount": headcount, "class_count": len(classes)}
     except Exception:
-        return {"groups": [], "semesters": [], "subjects": [], "headcount": 0}
+        return {"groups": [], "semesters": [], "subjects": [], "headcount": 0, "class_count": 0}
 
 # 실행: uvicorn app:app --host 0.0.0.0 --port 8000

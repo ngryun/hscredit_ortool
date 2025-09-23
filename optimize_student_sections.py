@@ -54,6 +54,7 @@ warnings.filterwarnings(
 
 # OR-Tools
 from ortools.sat.python import cp_model
+import sys, json, time
 
 SLOT_LABELS = "abcdefghijklmnopqrstuvwxyz"  # for pretty slot names
 
@@ -378,7 +379,34 @@ def build_and_solve(students: List[Dict],
     if num_workers and num_workers > 0:
         solver.parameters.num_search_workers = int(num_workers)
 
-    status = solver.Solve(model)
+    # Emit real progress on each improving solution (solutions callback)
+    class ProgressCallback(cp_model.CpSolverSolutionCallback):
+        def __init__(self, uMiss_vars: Dict[tuple, cp_model.IntVar]):
+            super().__init__()
+            self._solutions = 0
+            self._uMiss_vars = list(uMiss_vars.values())
+        def OnSolutionCallback(self):
+            self._solutions += 1
+            try:
+                unassigned = 0
+                for v in self._uMiss_vars:
+                    # Boolean var; Value is 0/1
+                    unassigned += int(self.Value(v))
+                payload = {
+                    "solutions": self._solutions,
+                    "wall_time": float(self.WallTime()),
+                    "objective": float(self.ObjectiveValue()),
+                    "unassigned": int(unassigned),
+                }
+                print("[PROGRESS] " + json.dumps(payload, ensure_ascii=False), flush=True)
+            except Exception:
+                # Best-effort progress; ignore callback errors
+                pass
+
+    cb = ProgressCallback(uMiss)
+    solver.parameters.log_to_stdout = False
+    solver.parameters.log_search_progress = False
+    status = solver.Solve(model, cb)
     status_str = solver.StatusName(status)
 
     # Extract
