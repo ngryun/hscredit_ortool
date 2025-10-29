@@ -1,0 +1,17 @@
+=== Optimization Report (OR-Tools CP-SAT) ===
+Solver status: FEASIBLE
+Students: 110 | Subjects: 15
+Slots: 4 | Rooms/slot: 6 | Extra allowed/slot: 0
+
+Total assignments: 428
+Total unassigned (student-subject pairs): 7
+Students with at least one unassigned: 7
+
+Slot usage:
+  - slot a: sections_open=6 (limit=6)
+  - slot b: sections_open=6 (limit=6)
+  - slot c: sections_open=6 (limit=6)
+  - slot d: sections_open=6 (limit=6)
+
+Constraints input summary: provided_keys=0 mapped_subjects=0
+Unmatched constraint keys: (none)

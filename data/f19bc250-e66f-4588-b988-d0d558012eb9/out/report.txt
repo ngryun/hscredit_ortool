@@ -1,0 +1,13 @@
+=== Optimization Report (OR-Tools CP-SAT) ===
+Solver status: OPTIMAL
+Students: 263 | Subjects: 8
+Slots: 3 | Rooms/slot: 11 | Extra allowed/slot: 0
+
+Total assignments: 789
+Total unassigned (student-subject pairs): 0
+Students with at least one unassigned: 0
+
+Slot usage:
+  - slot a: sections_open=11 (limit=11)
+  - slot b: sections_open=11 (limit=11)
+  - slot c: sections_open=11 (limit=11)

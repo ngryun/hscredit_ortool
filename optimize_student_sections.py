@@ -65,6 +65,12 @@ class Caps:
     maxcap: int
 
 
+@dataclass
+class SubjectConstraints:
+    max_sections_per_slot: Optional[int] = None
+    max_total_sections: Optional[int] = None
+
+
 def load_caps_override(path: Optional[str]) -> Dict[str, Caps]:
     if not path:
         return {}
@@ -77,6 +83,33 @@ def load_caps_override(path: Optional[str]) -> Dict[str, Caps]:
         cap = int(r[cols.get("cap", "cap")])
         maxcap = int(r[cols.get("maxcap", "maxcap")])
         subs[subj] = Caps(cap=cap, maxcap=maxcap)
+    return subs
+
+
+def load_subject_constraints_override(path: Optional[str]) -> Dict[str, SubjectConstraints]:
+    if not path:
+        return {}
+    df = pd.read_csv(path)
+    # expected columns: subject, max_sections_per_slot, max_total_sections (case-insensitive ok)
+    cols = {c.lower(): c for c in df.columns}
+    subs = {}
+    for _, r in df.iterrows():
+        subj = str(r[cols.get("subject", "subject")]).strip()
+        # Skip rows with invalid subject names
+        if not subj or subj == "nan":
+            continue
+
+        max_per_slot = r.get(cols.get("max_sections_per_slot", "max_sections_per_slot"))
+        max_total = r.get(cols.get("max_total_sections", "max_total_sections"))
+
+        # Handle NaN/empty values
+        max_per_slot = int(max_per_slot) if pd.notna(max_per_slot) and str(max_per_slot).strip() != "" else None
+        max_total = int(max_total) if pd.notna(max_total) and str(max_total).strip() != "" else None
+
+        subs[subj] = SubjectConstraints(
+            max_sections_per_slot=max_per_slot,
+            max_total_sections=max_total
+        )
     return subs
 
 
@@ -273,7 +306,8 @@ def build_and_solve(students: List[Dict],
                     caps_override_csv: Optional[str],
                     time_limit_s: float,
                     num_workers: int,
-                    extra_total_limit: Optional[int] = None) -> Tuple[pd.DataFrame, pd.DataFrame, str]:
+                    extra_total_limit: Optional[int] = None,
+                    subject_constraints_csv: Optional[str] = None) -> Tuple[pd.DataFrame, pd.DataFrame, str]:
     # Demand order helps with stable post-processing
     demand = Counter()
     for s in students:
@@ -291,6 +325,96 @@ def build_and_solve(students: List[Dict],
         return subs_caps.get(t, Caps(default_cap, default_maxcap)).cap
     def maxcap_of(t: str) -> int:
         return subs_caps.get(t, Caps(default_cap, default_maxcap)).maxcap
+
+    # Per-subject constraints (robust subject-name matching)
+    subs_constraints_raw = load_subject_constraints_override(subject_constraints_csv)
+    _raw_constraints_count = len(subs_constraints_raw)
+    print(f"[DEBUG] Loaded {_raw_constraints_count} subject constraints from {subject_constraints_csv}")
+
+    # Build a robust mapping from CSV subject keys -> actual subject names used by the model.
+    # This tolerates whitespace differences and optional disambiguation tags like " [..]" or " (2)".
+    import re
+
+    def _norm(s: str) -> str:
+        return " ".join(str(s).split()).strip().lower()
+
+    def _strip_tags(s: str) -> str:
+        # Remove trailing " [tag]" or " (k)" suffixes that may be added to disambiguate
+        x = re.sub(r"\s*\[[^\]]*\]\s*$", "", s)  # strip bracket tag at end
+        x = re.sub(r"\s*\(\d+\)\s*$", "", x)     # strip trailing (k)
+        return x
+
+    # Precompute lookup tables for actual subjects
+    actual_subjects = list(subjects_sorted)
+    norm_full_to_actual = {_norm(s): s for s in actual_subjects}
+    # For base-name mapping, there can be collisions; track all
+    base_to_actual: Dict[str, List[str]] = {}
+    for s in actual_subjects:
+        base = _norm(_strip_tags(s))
+        base_to_actual.setdefault(base, []).append(s)
+
+    subs_constraints: Dict[str, SubjectConstraints] = {}
+    unmatched_subject_keys: List[str] = []
+    mapped_pairs: List[Tuple[str, str]] = []
+    mapped_multi: List[Tuple[str, List[str]]] = []
+
+    # First pass: exact (normalized) matches take priority
+    for key, cons in subs_constraints_raw.items():
+        k_full = _norm(key)
+        if k_full in norm_full_to_actual:
+            actual = norm_full_to_actual[k_full]
+            subs_constraints[actual] = cons
+            mapped_pairs.append((key, actual))
+
+    # Second pass: base-name matches (may match multiple variants)
+    for key, cons in subs_constraints_raw.items():
+        k_full = _norm(key)
+        if k_full in norm_full_to_actual:
+            continue  # already handled by exact match
+        k_base = _norm(_strip_tags(key))
+        cand = base_to_actual.get(k_base, [])
+        if not cand:
+            unmatched_subject_keys.append(key)
+            continue
+        # Apply to all candidates that are not already constrained by an exact key
+        applied = []
+        for dst in cand:
+            if dst in subs_constraints:
+                continue
+            subs_constraints[dst] = cons
+            applied.append(dst)
+        if applied:
+            mapped_multi.append((key, applied))
+
+    # Logging
+    for src, dst in mapped_pairs:
+        c = subs_constraints.get(dst)
+        print(f"[DEBUG] Mapped constraint: '{src}' -> '{dst}' | per_slot={c.max_sections_per_slot} total={c.max_total_sections}")
+    for src, dsts in mapped_multi:
+        if dsts:
+            c = subs_constraints.get(dsts[0])
+            print(f"[DEBUG] Mapped base constraint: '{src}' -> {dsts} | per_slot={c.max_sections_per_slot} total={c.max_total_sections}")
+    if unmatched_subject_keys:
+        print(f"[WARN] {len(unmatched_subject_keys)} constraint subject(s) did not match any model subject:")
+        for k in unmatched_subject_keys:
+            print(f"[WARN]   - '{k}' (no match)")
+
+    # Build base-group aggregated constraints for multi-mapped subjects
+    base_group_constraints: List[Tuple[str, SubjectConstraints, List[int]]] = []
+    for src, dsts in mapped_multi:
+        cons = subs_constraints_raw.get(src)
+        if not cons:
+            continue
+        # Map actual subject names to indices; drop those not present (defensive)
+        idxs = [subj_index[d] for d in dsts if d in subj_index]
+        if not idxs:
+            continue
+        base_group_constraints.append((src, cons, idxs))
+
+    def max_sections_per_slot_of(t: str) -> Optional[int]:
+        return subs_constraints.get(t, SubjectConstraints()).max_sections_per_slot
+    def max_total_sections_of(t: str) -> Optional[int]:
+        return subs_constraints.get(t, SubjectConstraints()).max_total_sections
 
     # Indices
     U = len(students)
@@ -328,9 +452,19 @@ def build_and_solve(students: List[Dict],
                 uMiss[(u,t)] = model.NewBoolVar(f"uMiss_u{u}_t{t}")
 
     for t in T_idx:
+        tname = subjects_sorted[t]
+        # Calculate realistic upper bound for sections based on demand
+        max_sections_needed = max(1, math.ceil(demand.get(tname, 0) / cap_of(tname))) if demand.get(tname, 0) > 0 else 10
+        # Allow some buffer beyond theoretical minimum (up to 2x or 10 sections, whichever is larger)
+        max_sections_upper = max(10, min(2 * max_sections_needed, 20))
+        # If a per-slot limit exists, also tighten the variable upper bound proactively
+        mps = max_sections_per_slot_of(tname)
+        if mps is not None and mps >= 0:
+            max_sections_upper = min(max_sections_upper, int(mps))
+
         for s in S_idx:
-            n[(t,s)] = model.NewIntVar(0, 1000, f"n_t{t}_s{s}")
-            over[(t,s)] = model.NewIntVar(0, (maxcap_of(subjects_sorted[t])-cap_of(subjects_sorted[t]))*1000,
+            n[(t,s)] = model.NewIntVar(0, max_sections_upper, f"n_t{t}_s{s}")
+            over[(t,s)] = model.NewIntVar(0, (maxcap_of(tname)-cap_of(tname))*max_sections_upper,
                                           f"over_t{t}_s{s}")
     for s in S_idx:
         extra[s] = model.NewIntVar(0, extra_rooms_per_slot, f"extra_s{s}")
@@ -366,10 +500,41 @@ def build_and_solve(students: List[Dict],
     if extra_total_limit is not None and int(extra_total_limit) >= 0:
         model.Add(sum(extra[s] for s in S_idx) <= int(extra_total_limit))
 
+    # Per-subject constraints
+    for t in T_idx:
+        tname = subjects_sorted[t]
+
+        # Max sections per slot constraint
+        max_per_slot = max_sections_per_slot_of(tname)
+        if max_per_slot is not None and max_per_slot >= 0:
+            print(f"[DEBUG] Adding max_per_slot constraint for {tname}: {max_per_slot}")
+            for s in S_idx:
+                model.Add(n[(t,s)] <= max_per_slot)
+
+        # Max total sections constraint
+        max_total = max_total_sections_of(tname)
+        if max_total is not None and max_total >= 0:
+            print(f"[DEBUG] Adding max_total constraint for {tname}: {max_total}")
+            model.Add(sum(n[(t,s)] for s in S_idx) <= max_total)
+
+    # Aggregated base-name constraints (applied when one base maps to multiple actual subjects)
+    for src, cons, idxs in base_group_constraints:
+        if cons.max_sections_per_slot is not None and int(cons.max_sections_per_slot) >= 0:
+            val = int(cons.max_sections_per_slot)
+            print(f"[DEBUG] Adding AGG max_per_slot for base '{src}' over subjects {idxs}: {val}")
+            for s in S_idx:
+                model.Add(sum(n[(t,s)] for t in idxs) <= val)
+        if cons.max_total_sections is not None and int(cons.max_total_sections) >= 0:
+            val = int(cons.max_total_sections)
+            print(f"[DEBUG] Adding AGG max_total for base '{src}' over subjects {idxs}: {val}")
+            model.Add(sum(n[(t,s)] for t in idxs for s in S_idx) <= val)
+
     # Objective
-    W1 = 10**6
-    W2 = 10**4
-    W3 = 10**5
+    # Priority: minimize unassigned >> minimize overcapacity >> minimize extra rooms
+    # Adjusted weights to strongly prefer opening extra rooms over leaving students unassigned
+    W1 = 10**9  # Unassigned penalty (highest priority - increased)
+    W2 = 10**3  # Overcapacity penalty (moderate - reduced to allow more flexibility)
+    W3 = 10**2  # Extra rooms penalty (lowest - significantly reduced to encourage opening more sections)
     obj_terms = []
     obj_terms += [W1 * uMiss[(u,t)] for (u,t) in uMiss.keys()]
     obj_terms += [W2 * over[(t,s)] for t in T_idx for s in S_idx]
@@ -382,6 +547,16 @@ def build_and_solve(students: List[Dict],
         solver.parameters.max_time_in_seconds = float(time_limit_s)
     if num_workers and num_workers > 0:
         solver.parameters.num_search_workers = int(num_workers)
+
+    # Enhanced solver parameters for better solution quality (version-safe)
+    try:
+        solver.parameters.linearization_level = 2  # Aggressive linearization for better LP relaxation
+    except AttributeError:
+        pass
+    try:
+        solver.parameters.cp_model_presolve = True  # Enable presolve
+    except AttributeError:
+        pass
 
     # Emit real progress on each improving solution (solutions callback)
     class ProgressCallback(cp_model.CpSolverSolutionCallback):
@@ -546,6 +721,54 @@ def build_and_solve(students: List[Dict],
     rep_lines.append("Slot usage:")
     for s in S_idx:
         rep_lines.append(f"  - slot {slot_labels[s]}: sections_open={slot_section_count.get(s,0)} (limit={rooms_per_slot})")
+
+    # Applied per-subject constraints summary (only constrained subjects)
+    try:
+        # Summarize constraints input and mapping (always show to aid debugging)
+        provided = _raw_constraints_count if '_raw_constraints_count' in locals() else 0
+        mapped_cnt = len(subs_constraints) if 'subs_constraints' in locals() else 0
+        rep_lines.append("")
+        rep_lines.append(f"Constraints input summary: provided_keys={provided} mapped_subjects={mapped_cnt}")
+        if 'unmatched_subject_keys' in locals():
+            if unmatched_subject_keys:
+                rep_lines.append("Unmatched constraint keys:")
+                for k in unmatched_subject_keys:
+                    rep_lines.append(f"  - {k}")
+            else:
+                rep_lines.append("Unmatched constraint keys: (none)")
+
+        if subs_constraints:
+            rep_lines.append("")
+            rep_lines.append("Per-subject constraints (applied) and opened sections:")
+            for t in T_idx:
+                tname = subjects_sorted[t]
+                c = subs_constraints.get(tname)
+                if not c:
+                    continue
+                nvals = [int(solver.Value(n[(t,s)])) for s in S_idx]
+                total_n = sum(nvals)
+                rep_lines.append(
+                    f"  - {tname}: per_slot<={c.max_sections_per_slot if c.max_sections_per_slot is not None else 'NA'} "
+                    f"total<={c.max_total_sections if c.max_total_sections is not None else 'NA'} | "
+                    f"opened_by_slot={nvals} total={total_n}"
+                )
+        # Aggregated base-name constraints summary
+        if 'base_group_constraints' in locals() and base_group_constraints:
+            rep_lines.append("")
+            rep_lines.append("Base-group constraints (aggregated across variants):")
+            for src, cons, idxs in base_group_constraints:
+                # Build pretty subject names for indices
+                names = [subjects_sorted[t] for t in idxs]
+                # Gather opened counts
+                nvals = [sum(int(solver.Value(n[(t,s)])) for t in idxs) for s in S_idx]
+                total_n = sum(nvals)
+                rep_lines.append(
+                    f"  - {src}: per_slot<={cons.max_sections_per_slot if cons.max_sections_per_slot is not None else 'NA'} "
+                    f"total<={cons.max_total_sections if cons.max_total_sections is not None else 'NA'} | "
+                    f"subjects={names} | opened_by_slot={nvals} total={total_n}"
+                )
+    except Exception:
+        pass
     report_text = "\n".join(rep_lines)
 
     return sections_plan_df, assignments_df, report_text
@@ -561,6 +784,7 @@ def main():
     ap.add_argument("--cap", type=int, default=28, help="Default capacity per section (default: 28)")
     ap.add_argument("--maxcap", type=int, default=30, help="Default max capacity per section (default: 30)")
     ap.add_argument("--caps-csv", default=None, help="Optional CSV with per-subject cap/maxcap overrides (columns: subject,cap,maxcap)")
+    ap.add_argument("--constraints-csv", default=None, help="Optional CSV with per-subject section constraints (columns: subject,max_sections_per_slot,max_total_sections)")
     ap.add_argument("--group", default=None, help="Optional selection group filter for new Excel format (e.g., 'a').")
     ap.add_argument("--time-limit", type=float, default=60.0, help="Solver time limit in seconds (default: 60)")
     ap.add_argument("--workers", type=int, default=8, help="Number of solver workers (default: 8)")
@@ -580,7 +804,8 @@ def main():
         caps_override_csv=args.caps_csv,
         time_limit_s=args.time_limit,
         num_workers=args.workers,
-        extra_total_limit=args.extra_total
+        extra_total_limit=args.extra_total,
+        subject_constraints_csv=args.constraints_csv
     )
 
     out = Path(args.output_dir)

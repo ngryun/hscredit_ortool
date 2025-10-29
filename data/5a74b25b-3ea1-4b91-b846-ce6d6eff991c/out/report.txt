@@ -1,0 +1,22 @@
+=== Optimization Report (OR-Tools CP-SAT) ===
+Solver status: OPTIMAL
+Students: 263 | Subjects: 8
+Slots: 4 | Rooms/slot: 11 | Extra allowed/slot: 0
+
+Total assignments: 789
+Total unassigned (student-subject pairs): 0
+Students with at least one unassigned: 0
+
+Slot usage:
+  - slot a: sections_open=10 (limit=11)
+  - slot b: sections_open=11 (limit=11)
+  - slot c: sections_open=11 (limit=11)
+  - slot d: sections_open=11 (limit=11)
+
+Constraints input summary: provided_keys=3 mapped_subjects=3
+Unmatched constraint keys: (none)
+
+Per-subject constraints (applied) and opened sections:
+  - 화학: per_slot<=1 total<=NA | opened_by_slot=[1, 1, 1, 1] total=4
+  - 물리학: per_slot<=1 total<=NA | opened_by_slot=[1, 1, 1, 1] total=4
+  - 융합과학 탐구: per_slot<=NA total<=4 | opened_by_slot=[1, 1, 2, 0] total=4
