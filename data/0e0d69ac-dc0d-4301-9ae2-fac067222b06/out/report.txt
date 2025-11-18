@@ -1,0 +1,90 @@
+=== Optimization Report (OR-Tools CP-SAT) ===
+
+✓ OPTIMAL SOLUTION (최적해 보장)
+  → 더 나은 해는 존재하지 않습니다.
+
+Students: 113 | Subjects: 13
+Slots: 4 | Rooms/slot: 5 | Extra allowed/slot: 1
+
+Total assignments: 445
+Total unassigned (student-subject pairs): 7
+Students with at least one unassigned: 7
+Lexicographic phase1 status: FEASIBLE | min_unassigned=7
+
+Slot usage:
+  - slot a: sections_open=6 (limit=5)
+  - slot b: sections_open=6 (limit=5)
+  - slot c: sections_open=5 (limit=5)
+  - slot d: sections_open=5 (limit=5)
+
+Fixed total sections (사용자 지정):
+  - 일본어: total_sections=3
+  - 법과 사회: total_sections=2
+  - 주제 탐구 독서: total_sections=2
+  - 생명과학: total_sections=2
+  - 미술 창작: total_sections=2
+  - 인문학과 윤리: total_sections=2
+  - 세계사: total_sections=2
+  - 세계시민과 지리: total_sections=2
+  - 화학: total_sections=1
+  - 세계 문화와 영어: total_sections=1
+  - 지구과학: total_sections=1
+  - 물리학: total_sections=1
+  - 인공지능 수학: total_sections=1
+
+Fixed-section subjects without match:
+  - 사회문제 탐구
+  - 윤리와 사상
+  - 화법과 언어
+  - 음악과 미디어
+  - 매체 의사소통
+  - 기후변화와 환경생태
+  - 사회와 문화
+  - 인간과 심리
+  - 미술과 매체
+  - 영어Ⅱ
+  - 보건
+  - 확률과 통계
+  - 인간과 철학
+  - 현대사회와 윤리
+  - 생태와 환경
+  - 정치
+  - 직무 의사소통
+  - 윤리문제 탐구
+  - 직무 영어
+  - 인간과 경제활동
+  - 과학의 역사와 문화
+  - 교육의 이해
+  - 실생활 영어 회화
+  - 문학과 영상
+  - 한국지리 탐구
+  - 여행지리
+  - 정보
+  - 데이터 과학
+  - 생물의 유전
+  - 마케팅과 광고
+  - 세포와 물질대사
+  - 역사로 탐구하는 현대 세계
+  - 미디어 영어
+  - 독서 토론과 글쓰기
+  - 물질과 에너지
+  - 화학 반응의 세계
+  - 교육의 이해 [3-2-D]
+  - 음악 연주와 창작
+  - 경제 수학
+  - 기하
+  - 동아시아 역사 기행
+  - 수학과 문화
+  - 미적분Ⅱ
+  - 도시의 미래 탐구
+  - 지구시스템과학
+  - 직무 수학
+  - 행성우주과학
+  - 언어생활 탐구
+  - 영어 발표와 토론
+  - 보건 [3-2-D]
+  - 역학과 에너지
+  - 전자기와 양자
+
+Constraints input summary: provided_keys=0 mapped_subjects=0
+Unmatched constraint keys: (none)

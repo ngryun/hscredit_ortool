@@ -183,7 +183,41 @@ def index():
                 <select id=\"group-select\" name=\"group\" class=\"w-full rounded-lg border border-stone-300 p-2 bg-white\"></select>
                 <p class=\"mt-1 text-xs text-stone-500\">선택그룹이 여러 개 감지되었습니다. 이동반 편성하고자 하는 선택그룹을 선택해주세요.</p>
               </div>
-              
+
+              <div id=\"inspect-wrap\" class=\"mb-4 hidden\">
+                <div class=\"rounded-lg border border-sage-200 bg-sage-50 p-3 text-sm\" id=\"inspect-body\"></div>
+              </div>
+
+              <div id=\"subject-preview-wrap\" class=\"mb-4 hidden rounded-lg border border-stone-200 bg-white shadow-inner\">
+                <div class=\"flex flex-col gap-2 border-b border-stone-200 p-3 md:flex-row md:items-center md:justify-between\">
+                  <div>
+                    <div class=\"text-sm font-medium text-stone-900\">과목별 추천 반수</div>
+                    <p class=\"text-xs text-stone-500\">현재 정원 기준 추천 반수가 자동으로 고정됩니다. 값을 수정하거나 비워두면 해당 과목만 조정됩니다.</p>
+                  </div>
+                  <div class=\"flex gap-2\">
+                    <button id=\"apply-section-recommend\" type=\"button\" class=\"rounded-md border border-sage-300 px-3 py-1 text-sm text-sage-700 hover:bg-sage-50\">추천값 다시 적용</button>
+                    <button id=\"release-all-sections\" type=\"button\" class=\"rounded-md border border-stone-300 px-3 py-1 text-sm text-stone-600 hover:bg-stone-50\">모두 자동</button>
+                  </div>
+                </div>
+                <div class=\"overflow-x-auto\">
+                  <table class=\"min-w-full divide-y divide-stone-200 text-sm\">
+                    <thead class=\"bg-sage-100\">
+                      <tr>
+                        <th class=\"px-3 py-2 text-left font-medium text-stone-700\">과목</th>
+                        <th class=\"px-3 py-2 text-right font-medium text-stone-700\">선택인원</th>
+                        <th class=\"px-3 py-2 text-right font-medium text-stone-700\">권장 반수</th>
+                        <th class=\"px-3 py-2 text-left font-medium text-stone-700\">개설 반수</th>
+                        <th class=\"px-3 py-2 text-right font-medium text-stone-700\">평균 학생수</th>
+                      </tr>
+                    </thead>
+                    <tbody id=\"subject-preview-body\" class=\"divide-y divide-stone-100 bg-white\"></tbody>
+                  </table>
+                </div>
+                <div class=\"border-t border-stone-200 p-3 text-xs text-stone-500\">
+                  값이 비어 있으면 해당 과목은 자동으로 결정됩니다. 입력값을 바꾸면 그 숫자로 분반 수가 고정됩니다.
+                </div>
+              </div>
+
               <div class=\"grid grid-cols-1 md:grid-cols-3 gap-3\">
                 <div>
                   <label class=\"block text-sm text-stone-700 mb-1\">선택수</label>
@@ -248,15 +282,10 @@ def index():
                 </div>
                 <div class=\"space-y-4\">
                   <div>
-                    <label class=\"block text-sm font-medium text-stone-700 mb-1\">슬롯당 최대 반 수</label>
-                    <input id=\"max-per-slot\" type=\"number\" min=\"0\" placeholder=\"제한 없음\" class=\"w-full rounded-lg border border-stone-300 p-2 focus:outline-none focus:ring-2 focus:ring-sage-300\" />
-                    <p class=\"mt-1 text-xs text-stone-500\">각 시간대에 이 과목이 개설할 수 있는 최대 반 수</p>
-                  </div>
-                  <div>
-                    <label class=\"block text-sm font-medium text-stone-700 mb-1\">전체 최대 반 수</label>
-                    <input id=\"max-total\" type=\"number\" min=\"0\" placeholder=\"제한 없음\" class=\"w-full rounded-lg border border-stone-300 p-2 focus:outline-none focus:ring-2 focus:ring-sage-300\" />
-                    <p class=\"mt-1 text-xs text-stone-500\">모든 시간대를 통틀어 이 과목이 개설할 수 있는 최대 반 수</p>
-                  </div>
+                  <label class=\"block text-sm font-medium text-stone-700 mb-1\">동시간에 수업 가능한 교사 수</label>
+                  <input id=\"max-per-slot\" type=\"number\" min=\"0\" placeholder=\"제한 없음\" class=\"w-full rounded-lg border border-stone-300 p-2 focus:outline-none focus:ring-2 focus:ring-sage-300\" />
+                  <p class=\"mt-1 text-xs text-stone-500\">각 시간대에 이 과목이 개설할 수 있는 최대 반 수</p>
+                </div>
                   <div class=\"flex justify-end space-x-3 pt-4\">
                     <button id=\"clear-constraints\" class=\"px-4 py-2 text-stone-600 hover:text-stone-800\">제약 해제</button>
                     <button id=\"save-constraints\" class=\"px-4 py-2 bg-sage-600 text-white rounded-lg hover:bg-sage-700\">저장</button>
@@ -290,9 +319,13 @@ def index():
         const mascot = document.getElementById('mascot');
         const mascotVideo = document.getElementById('mascot-video');
         const mascotDone = document.getElementById('mascot-done');
-        // Preview UI is removed; provide safe dummies for legacy code paths
-        const inspectWrap = {{ classList: {{ add: ()=>{{}}, remove: ()=>{{}} }} }};
-        const inspectBody = {{ innerHTML: '' }};
+        const inspectWrap = document.getElementById('inspect-wrap');
+        const inspectBody = document.getElementById('inspect-body');
+        const subjectPreviewWrap = document.getElementById('subject-preview-wrap');
+        const subjectPreviewBody = document.getElementById('subject-preview-body');
+        const applySectionRecommendBtn = document.getElementById('apply-section-recommend');
+        const releaseAllSectionsBtn = document.getElementById('release-all-sections');
+        const capInput = form.querySelector('input[name="cap"]');
         let pollTimer = null;
         let pivotData = null;
         let lastInspect = null;
@@ -300,13 +333,46 @@ def index():
         let runStartMs = null;    // client-side ticking timer
         let tickTimer = null;     // interval handle for elapsed seconds
         let lastProgress = null;  // latest progress payload
-        let subjectConstraints = {{}};  // subject name -> {{maxPerSlot, maxTotal}}
+        let subjectConstraints = {{}};  // subject name -> {{maxPerSlot}}
         let currentModalSubject = null;  // currently editing subject in modal
+        let fixedSectionTargets = {{}};
+        let currentGroupFilter = '';
+        let subjectCounts = {{}};
+
+        if (groupSel) {{
+          groupSel.addEventListener('change', () => {{
+            currentGroupFilter = (groupSel.value || '').trim();
+            if (lastInspect) renderSubjectPreview(lastInspect);
+          }});
+        }}
 
         function setStatus(text, color='sage') {{
           statusBadge.textContent = text;
           statusBadge.classList.remove('hidden');
           statusBadge.className = `inline-flex items-center px-2 py-1 text-xs rounded-full bg-${{color}}-50 text-${{color}}-700 ring-1 ring-${{color}}-200`;
+        }}
+
+        function escapeHtml(str) {{
+          return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+        }}
+
+        function escapeSelector(str) {{
+          if (window.CSS && CSS.escape) {{
+            return CSS.escape(str);
+          }}
+          return String(str).replace(/"/g, '\\"');
+        }}
+
+        function recommendedSections(count) {{
+          const capVal = Math.max(1, parseInt(capInput?.value || '28', 10) || 28);
+          const demand = Number(count || 0);
+          if (demand <= 0) return 0;
+          return Math.max(1, Math.ceil(demand / capVal));
         }}
 
         function clearDownloads() {{
@@ -349,7 +415,7 @@ def index():
             const ua = (pivotData.row_meta && pivotData.row_meta[subject]) ? Number(pivotData.row_meta[subject].unassigned || 0) : 0;
             let cells = '';
             // Subject with gear icon
-            const hasConstraints = subjectConstraints[subject] && (subjectConstraints[subject].maxPerSlot || subjectConstraints[subject].maxTotal);
+            const hasConstraints = subjectConstraints[subject] && subjectConstraints[subject].maxPerSlot;
             const constraintIndicator = hasConstraints ?
               '<span class="inline-block w-2 h-2 bg-sage-500 rounded-full ml-1" title="제약 조건 설정됨"></span>' : '';
             cells += `<td class="px-3 py-1 text-left border-b border-stone-100">
@@ -396,43 +462,161 @@ def index():
           drawPivot();
         }}
 
-        // Preview: Subject, 총인원, slots columns filled with 0
+        // Preview with optional group filtering
         function renderSubjectPreview(info) {{
           try {{
-            const subs = Array.isArray(info?.subjects) ? info.subjects : [];
-            const slots = Number(form.querySelector('input[name="slots"]').value || 4);
-            const labels = 'abcdefghijklmnopqrstuvwxyz'.slice(0, Math.max(0, slots)).split('');
-            if (!subs.length) {{ pivotWrap.classList.add('hidden'); pivotTable.innerHTML=''; return; }}
-            let thead = '<tr>' +
-              '<th class="px-3 py-2 text-left text-stone-700 border-b border-stone-200">Subject</th>' +
-              '<th class="px-3 py-2 text-right text-stone-700 border-b border-stone-200">총인원</th>';
-            for (const lb of labels) {{ thead += `<th class=\"px-3 py-2 text-right text-stone-700 border-b border-stone-200\">${{lb}}</th>`; }}
-            thead += '</tr>';
-            const rows = subs.map(s => {{
-              const total = Number(s.count||0).toLocaleString();
-              const hasConstraints = subjectConstraints[s.name] && (subjectConstraints[s.name].maxPerSlot || subjectConstraints[s.name].maxTotal);
-              const constraintIndicator = hasConstraints ?
-                '<span class="inline-block w-2 h-2 bg-sage-500 rounded-full ml-1" title="제약 조건 설정됨"></span>' : '';
-              let cells = '';
-              cells += `<td class="px-3 py-1 text-left border-b border-stone-100">
-                <div class="flex items-center gap-2">
-                  <span>${{s.name}}</span>
-                  ${{constraintIndicator}}
-                  <button data-subject="${{s.name}}" class="constraint-btn text-stone-400 hover:text-stone-600" title="제약 조건 설정">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.5 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                  </button>
-                </div>
-              </td>`;
-              cells += `<td class=\"px-3 py-1 text-right border-b border-stone-100\">${{total}}</td>`;
-              for (const _ of labels) {{ cells += `<td class=\"px-3 py-1 text-right border-b border-stone-100\">0</td>`; }}
-              return `<tr class=\"odd:bg-white even:bg-sage-50\">${{cells}}</tr>`;
-            }}).join('');
-            pivotTable.innerHTML = `<thead class=\"bg-sage-100\">${{thead}}</thead><tbody>${{rows}}</tbody>`;
-            pivotWrap.classList.remove('hidden');
-          }} catch (err) {{ console.warn('preview render error', err); }}
+            const subjects = Array.isArray(info?.subjects) ? info.subjects : [];
+            const activeGroup = (currentGroupFilter || '').trim();
+            const filtered = activeGroup
+              ? subjects.filter((s) => ((s?.group ?? '').toString().trim() === activeGroup))
+              : subjects;
+            const list = filtered.length ? filtered : subjects;
+            if (!list.length) {{
+              subjectPreviewBody.innerHTML = '<tr><td class=\"px-3 py-3 text-sm text-stone-500\">표시할 과목이 없습니다.</td></tr>';
+              subjectPreviewWrap.classList.remove('hidden');
+              return;
+            }}
+            subjectCounts = {{}};
+            const rows = list.map((s) => {{
+              const name = (s?.name ?? '').toString().trim();
+              if (!name) return '';
+              const count = Number(s?.count ?? 0);
+              subjectCounts[name] = count;
+              const recommended = recommendedSections(count);
+              if (!(name in fixedSectionTargets)) {{
+                fixedSectionTargets[name] = recommended > 0 ? recommended : null;
+              }}
+              const lockedValue = fixedSectionTargets[name];
+              const displayVal = (lockedValue === 0 || lockedValue) ? lockedValue : '';
+              const effectiveSections = displayVal !== '' ? Number(displayVal) : (recommended > 0 ? recommended : 0);
+              const averageText = effectiveSections > 0 ? (count / effectiveSections).toFixed(1) : '-';
+              const safeName = escapeHtml(name);
+              const hasOtherConstraints = subjectConstraints[name] && subjectConstraints[name].maxPerSlot;
+              const indicator = hasOtherConstraints ? '<span class="inline-block w-2 h-2 bg-sage-500 rounded-full" title="기타 제약 있음"></span>' : '';
+              const groupLabel = (s?.group ?? '').toString().trim();
+              const groupBadge = groupLabel ? `<span class="text-xs px-2 py-0.5 rounded-full bg-sage-100 text-sage-700">${{escapeHtml(groupLabel)}}</span>` : '';
+              return `
+                <tr class="odd:bg-white even:bg-sage-50">
+                  <td class="px-3 py-2 align-top">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="font-medium text-stone-800 truncate" title="${{safeName}}">${{safeName}}</span>
+                      ${{groupBadge}}
+                      ${{indicator}}
+                      <button data-subject="${{safeName}}" class="constraint-btn text-stone-400 hover:text-stone-600" title="제약 조건 설정">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="text-xs text-stone-500 mt-0.5">선택 ${{count.toLocaleString()}}명</div>
+                  </td>
+                  <td class="px-3 py-2 text-right align-top">${{count.toLocaleString()}}</td>
+                  <td class="px-3 py-2 text-right align-top">${{recommended}}</td>
+                  <td class="px-3 py-2 align-top">
+                    <div class="flex items-center gap-2">
+                      <input type="number" min="0" class="section-input w-20 rounded-md border border-stone-300 px-2 py-1 text-right"
+                        data-subject="${{safeName}}" data-recommended="${{recommended}}" value="${{displayVal === '' ? '' : displayVal}}"
+                        placeholder="${{recommended || ''}}" />
+                      <button type="button" class="section-reset text-xs text-stone-500 hover:text-stone-700"
+                        data-subject="${{safeName}}" data-recommended="${{recommended}}">↺</button>
+                    </div>
+                    <p class="mt-1 text-xs text-stone-400">비워두면 자동 결정</p>
+                  </td>
+                  <td class="px-3 py-2 text-right align-top">
+                    <span class="avg-text" data-subject="${{safeName}}" data-count="${{count}}" data-recommended="${{recommended}}">${{averageText}}</span>
+                  </td>
+                </tr>`;
+            }}).filter(Boolean).join('');
+            subjectPreviewBody.innerHTML = rows;
+            subjectPreviewWrap.classList.remove('hidden');
+            subjectPreviewBody.querySelectorAll('.section-input').forEach((inp) => {{
+              inp.addEventListener('input', () => handleSectionInput(inp));
+            }});
+            subjectPreviewBody.querySelectorAll('.section-reset').forEach((btn) => {{
+              btn.addEventListener('click', () => resetSectionValue(btn));
+            }});
+          }} catch (err) {{
+            console.warn('preview render error', err);
+            subjectPreviewBody.innerHTML = '';
+            subjectPreviewWrap.classList.add('hidden');
+          }}
+        }}
+
+        if (applySectionRecommendBtn) {{
+          applySectionRecommendBtn.addEventListener('click', () => {{
+            if (!lastInspect) return;
+            const subjects = Array.isArray(lastInspect.subjects) ? lastInspect.subjects : [];
+            subjects.forEach((s) => {{
+              const name = (s?.name ?? '').toString().trim();
+              if (!name) return;
+              const rec = recommendedSections(Number(s?.count ?? 0));
+              fixedSectionTargets[name] = rec > 0 ? rec : null;
+            }});
+            renderSubjectPreview(lastInspect);
+          }});
+        }}
+        if (releaseAllSectionsBtn) {{
+          releaseAllSectionsBtn.addEventListener('click', () => {{
+            Object.keys(fixedSectionTargets).forEach((key) => {{
+              fixedSectionTargets[key] = null;
+            }});
+            if (lastInspect) renderSubjectPreview(lastInspect);
+          }});
+        }}
+
+        function handleSectionInput(inputEl) {{
+          const subj = inputEl?.dataset?.subject;
+          if (!subj) return;
+          const raw = inputEl.value.trim();
+          if (raw === '') {{
+            fixedSectionTargets[subj] = null;
+            updateAverageDisplay(subj);
+            return;
+          }}
+          let val = parseInt(raw, 10);
+          if (!Number.isFinite(val)) {{
+            fixedSectionTargets[subj] = null;
+            updateAverageDisplay(subj);
+            return;
+          }}
+          if (val < 0) val = 0;
+          fixedSectionTargets[subj] = val;
+          updateAverageDisplay(subj);
+        }}
+
+        function resetSectionValue(btn) {{
+          const subj = btn?.dataset?.subject;
+          if (!subj) return;
+          const rec = parseInt(btn.dataset.recommended || '0', 10);
+          fixedSectionTargets[subj] = rec > 0 ? rec : null;
+          const target = Array.from(subjectPreviewBody.querySelectorAll('.section-input')).find((el) => el.dataset.subject === subj);
+          if (target) {{
+            target.value = rec > 0 ? rec : '';
+          }}
+          updateAverageDisplay(subj);
+        }}
+
+        function updateAverageDisplay(subjectName) {{
+          const sel = escapeSelector(subjectName);
+          const avgEl = subjectPreviewBody.querySelector(`.avg-text[data-subject=\"${{sel}}\"]`);
+          if (!avgEl) return;
+          const count = Number(avgEl.dataset.count || subjectCounts[subjectName] || 0);
+          const recommended = Number(avgEl.dataset.recommended || 0);
+          const input = subjectPreviewBody.querySelector(`.section-input[data-subject=\"${{sel}}\"]`);
+          let sections = null;
+          if (input) {{
+            const val = input.value.trim();
+            if (val !== '') sections = Number(val);
+          }}
+          if (sections === null || !Number.isFinite(sections) || sections <= 0) {{
+            sections = recommended > 0 ? recommended : null;
+          }}
+          if (sections && sections > 0) {{
+            avgEl.textContent = (count / sections).toFixed(1);
+          }} else {{
+            avgEl.textContent = '-';
+          }}
         }}
 
         // Inspect uploaded file for quick preview (groups, semesters, subjects, headcount)
@@ -449,6 +633,9 @@ def index():
           const f = e.target.files && e.target.files[0];
           groupSel.innerHTML = '';
           groupRow.classList.add('hidden');
+          fixedSectionTargets = {{}};
+          subjectPreviewBody.innerHTML = '';
+          subjectPreviewWrap.classList.add('hidden');
           if (!f) return;
           try {{
             const info = await inspectFile(f);
@@ -459,7 +646,9 @@ def index():
             // Cache and render preview
             lastInspect = info;
             renderSubjectPreview(lastInspect);
+            const enableLegacyPreview = false;
             // Inline preview (kept for backward-compat; ensure braces escaped in f-string)
+            if (enableLegacyPreview) {{
             try {{
               const subs = Array.isArray(info?.subjects) ? info.subjects : [];
               const slots = Number(form.querySelector('input[name="slots"]').value || 4);
@@ -472,7 +661,7 @@ def index():
                 thead += '</tr>';
                 const rows = subs.map(s => {{
                   const total = Number(s.count||0).toLocaleString();
-                  const hasConstraints = subjectConstraints[s.name] && (subjectConstraints[s.name].maxPerSlot || subjectConstraints[s.name].maxTotal);
+              const hasConstraints = subjectConstraints[s.name] && subjectConstraints[s.name].maxPerSlot;
                   const constraintIndicator = hasConstraints ?
                     '<span class="inline-block w-2 h-2 bg-sage-500 rounded-full ml-1" title="제약 조건 설정됨"></span>' : '';
                   let cells = '';
@@ -496,65 +685,62 @@ def index():
                 pivotWrap.classList.remove('hidden');
               }}
             }} catch (err) {{ console.warn('preview render error', err); }}
-            // Render preview summary
-            if (info) {{
-              const head = Number(info.headcount || 0).toLocaleString();
-              const semesters = (info.semesters || []).join(', ');
-              const gstr = groups.join(', ');
-              const subjects = Array.isArray(info.subjects) ? info.subjects : [];
-              const subjHtml = subjects.slice(0, 50).map(s => `
-                <li class=\"flex justify-between\">
-                  <span class=\"truncate\" title=\"${{s.name}}\">${{s.name}}</span>
-                  <span class=\"text-stone-700 ml-3\">${{Number(s.count||0).toLocaleString()}}</span>
-                </li>`).join('');
-              inspectBody.innerHTML = `
-                <div class=\"mb-2\">총 인원: <span class=\"font-medium\">${{head}}</span></div>
-                ${{semesters ? `<div class=\\"mb-2\\">학기: <span class=\\"font-medium\\">${{semesters}}</span></div>` : ''}}
-                ${{gstr ? `<div class=\\"mb-2\\">선택그룹: <span class=\\"font-medium\\">${{gstr}}</span></div>` : ''}}
-                <div class=\"mb-1\">과목 및 선택 수 (상위 50)</div>
-                <ul class=\"space-y-0.5\">${{subjHtml}}</ul>
-              `;
-              inspectWrap.classList.remove('hidden');
-            }} else {{
-              inspectBody.innerHTML = '';
-              inspectWrap.classList.add('hidden');
             }}
+            // Render preview summary
+            inspectBody.innerHTML = '';
+            inspectWrap.classList.add('hidden');
             // Group selection
             if (groups.length > 1) {{
+              const placeholder = document.createElement('option');
+              placeholder.value = '';
+              placeholder.textContent = '전체 (모든 그룹)';
+              groupSel.appendChild(placeholder);
               for (const g of groups) {{
                 const opt = document.createElement('option');
                 opt.value = String(g);
                 opt.textContent = String(g);
                 groupSel.appendChild(opt);
               }}
+              groupSel.value = '';
+              currentGroupFilter = '';
               groupRow.classList.remove('hidden');
             }} else if (groups.length === 1) {{
               const opt = document.createElement('option');
               opt.value = String(groups[0]);
               opt.textContent = String(groups[0]);
               groupSel.appendChild(opt);
+              groupSel.value = String(groups[0]);
+              currentGroupFilter = String(groups[0]);
+              groupRow.classList.add('hidden');
+            }} else {{
+              currentGroupFilter = '';
               groupRow.classList.add('hidden');
             }}
+            renderSubjectPreview(lastInspect);
           }} catch (err) {{
             console.warn('inspect error', err);
             inspectBody.innerHTML = '';
             inspectWrap.classList.add('hidden');
+            subjectPreviewBody.innerHTML = '';
+            subjectPreviewWrap.classList.add('hidden');
           }}
         }});
 
-        // Re-render preview when slots value changes
         const slotsInp = form.querySelector('input[name="slots"]');
+        const rerenderPreview = () => {{ if (lastInspect) renderSubjectPreview(lastInspect); }};
         if (slotsInp) {{
-          const rerender = () => {{ if (lastInspect) renderSubjectPreview(lastInspect); }};
-          slotsInp.addEventListener('input', rerender);
-          slotsInp.addEventListener('change', rerender);
+          slotsInp.addEventListener('input', rerenderPreview);
+          slotsInp.addEventListener('change', rerenderPreview);
+        }}
+        if (capInput) {{
+          capInput.addEventListener('input', rerenderPreview);
+          capInput.addEventListener('change', rerenderPreview);
         }}
 
         // Constraint modal functions
         const constraintModal = document.getElementById('constraint-modal');
         const modalTitle = document.getElementById('modal-subject-title');
         const maxPerSlotInput = document.getElementById('max-per-slot');
-        const maxTotalInput = document.getElementById('max-total');
         const closeModalBtn = document.getElementById('close-modal');
         const clearConstraintsBtn = document.getElementById('clear-constraints');
         const saveConstraintsBtn = document.getElementById('save-constraints');
@@ -566,7 +752,6 @@ def index():
           // Load existing constraints
           const existing = subjectConstraints[subjectName] || {{}};
           maxPerSlotInput.value = existing.maxPerSlot || '';
-          maxTotalInput.value = existing.maxTotal || '';
 
           constraintModal.classList.remove('hidden');
         }}
@@ -580,15 +765,13 @@ def index():
           if (!currentModalSubject) return;
 
           const maxPerSlot = maxPerSlotInput.value.trim();
-          const maxTotal = maxTotalInput.value.trim();
 
-          if (!maxPerSlot && !maxTotal) {{
+          if (!maxPerSlot) {{
             // No constraints - remove from object
             delete subjectConstraints[currentModalSubject];
           }} else {{
             const constraints = {{}};
             if (maxPerSlot) constraints.maxPerSlot = parseInt(maxPerSlot);
-            if (maxTotal) constraints.maxTotal = parseInt(maxTotal);
             subjectConstraints[currentModalSubject] = constraints;
           }}
 
@@ -671,11 +854,25 @@ def index():
             constraintsInput.value = constraintsJsonStr;
             form.appendChild(constraintsInput);
 
+            const sectionTotalsInput = document.createElement('input');
+            sectionTotalsInput.type = 'hidden';
+            sectionTotalsInput.name = 'section_totals_json';
+            const sectionPayload = {{}};
+            Object.entries(fixedSectionTargets).forEach(([subject, value]) => {{
+              if (value === null || value === undefined || value === '') return;
+              const num = parseInt(value, 10);
+              if (!Number.isFinite(num)) return;
+              sectionPayload[subject] = num;
+            }});
+            sectionTotalsInput.value = JSON.stringify(sectionPayload);
+            form.appendChild(sectionTotalsInput);
+
             // Recreate FormData to include the new input
             const newFd = new FormData(form);
 
             // Remove the temporary input
             form.removeChild(constraintsInput);
+            form.removeChild(sectionTotalsInput);
 
             console.log('[DEBUG] Sending POST request to /run...');
             const res = await fetch('/run', {{ method: 'POST', body: newFd }});
@@ -777,7 +974,8 @@ JOBS = {}  # job_id -> {"status": "PENDING|RUNNING|DONE|ERROR", "dir": Path, "er
 
 async def run_optimizer(job_id: str, xlsx_path: Path, out_dir: Path,
                         slots: int, rooms: int, extra: int, cap: int, maxcap: int, group: str | None = None,
-                        extra_total: int | None = None, constraints_csv_path: Path | None = None):
+                        extra_total: int | None = None, constraints_csv_path: Path | None = None,
+                        fixed_sections_csv_path: Path | None = None):
     async with sema:  # 동시 실행 개수 제한
         JOBS[job_id]["status"] = "RUNNING"
         cmd = [
@@ -789,7 +987,7 @@ async def run_optimizer(job_id: str, xlsx_path: Path, out_dir: Path,
             "--extra-rooms-per-slot", str(extra),
             "--cap", str(cap),
             "--maxcap", str(maxcap),
-            "--time-limit", "120",
+            "--time-limit", "240",
             "--workers", "8"  # 머신 코어/워커 수에 맞춰 조정
         ]
         if group:
@@ -798,11 +996,15 @@ async def run_optimizer(job_id: str, xlsx_path: Path, out_dir: Path,
             cmd += ["--extra-total", str(extra_total)]
         if constraints_csv_path and constraints_csv_path.exists():
             cmd += ["--constraints-csv", str(constraints_csv_path)]
+        if fixed_sections_csv_path and fixed_sections_csv_path.exists():
+            cmd += ["--fixed-sections-csv", str(fixed_sections_csv_path)]
         # Debug: show launch command and whether constraints CSV attached
         try:
             print("[DEBUG] Launching optimizer:", " ".join(cmd))
             if constraints_csv_path:
                 print(f"[DEBUG] constraints_csv_path: {constraints_csv_path} exists={constraints_csv_path.exists()}")
+            if fixed_sections_csv_path:
+                print(f"[DEBUG] fixed_sections_csv_path: {fixed_sections_csv_path} exists={fixed_sections_csv_path.exists()}")
         except Exception:
             pass
         # 비동기 실행
@@ -879,6 +1081,7 @@ async def run(request: Request):
     group = form_data.get("group")
     extra_total = form_data.get("extra_total")
     constraints_json = form_data.get("constraints_json")
+    section_totals_json = form_data.get("section_totals_json")
 
     print(f"[DEBUG] Received constraints_json: {constraints_json}")
     job_id = str(uuid.uuid4())
@@ -919,6 +1122,27 @@ async def run(request: Request):
             print(f"[DEBUG] Error parsing constraints: {e}")
             pass  # Ignore constraint parsing errors
 
+    fixed_sections_csv_path = None
+    if section_totals_json:
+        try:
+            import json
+            section_data = json.loads(section_totals_json)
+            if section_data:
+                fixed_sections_csv_path = out_dir / "fixed_sections.csv"
+                with open(fixed_sections_csv_path, "w", encoding="utf-8", newline="") as f:
+                    writer = csv.writer(f)
+                    writer.writerow(["subject", "total_sections"])
+                    for subject, total in section_data.items():
+                        try:
+                            val = int(total)
+                        except Exception:
+                            continue
+                        writer.writerow([str(subject), val])
+                print(f"[DEBUG] Created fixed sections CSV at: {fixed_sections_csv_path}")
+        except Exception as e:
+            print(f"[DEBUG] Error parsing section totals: {e}")
+            fixed_sections_csv_path = None
+
     JOBS[job_id] = {"status": "PENDING", "dir": job_dir, "error": None}
     # 백그라운드 태스크 시작 (즉시 응답)
     et_val = None
@@ -927,7 +1151,7 @@ async def run(request: Request):
             et_val = int(str(extra_total).strip())
     except Exception:
         et_val = None
-    asyncio.create_task(run_optimizer(job_id, xlsx_path, out_dir, slots, rooms, extra, cap, maxcap, group, et_val, constraints_csv_path))
+    asyncio.create_task(run_optimizer(job_id, xlsx_path, out_dir, slots, rooms, extra, cap, maxcap, group, et_val, constraints_csv_path, fixed_sections_csv_path))
 
     return {"job": job_id, "status_url": f"/jobs/{job_id}"}
 
@@ -943,21 +1167,24 @@ def job_status(job_id: str):
         resp["progress"] = info["progress"]
     if info.get("summary"):
         resp["summary"] = info["summary"]
-    if info["status"] == "DONE":
-        resp.update({
-            "sections": f"/download/{job_id}/sections_plan.csv",
-            "assignments": f"/download/{job_id}/assignments.csv",
-            "report": f"/download/{job_id}/report.txt",
-        })
-        # Expose constraints CSV if present (saved under out/)
-        try:
-            cspath = info["dir"] / "out" / "constraints.csv"
-            if cspath.exists():
-                resp["constraints"] = f"/download/{job_id}/constraints.csv"
-        except Exception:
-            pass
-        if info.get("pivot"):
-            resp["pivot"] = info["pivot"]
+        if info["status"] == "DONE":
+            resp.update({
+                "sections": f"/download/{job_id}/sections_plan.csv",
+                "assignments": f"/download/{job_id}/assignments.csv",
+                "report": f"/download/{job_id}/report.txt",
+            })
+            # Expose constraints CSV if present (saved under out/)
+            try:
+                cspath = info["dir"] / "out" / "constraints.csv"
+                if cspath.exists():
+                    resp["constraints"] = f"/download/{job_id}/constraints.csv"
+                fspath = info["dir"] / "out" / "fixed_sections.csv"
+                if fspath.exists():
+                    resp["section_totals"] = f"/download/{job_id}/fixed_sections.csv"
+            except Exception:
+                pass
+            if info.get("pivot"):
+                resp["pivot"] = info["pivot"]
     if info["status"] == "ERROR":
         resp["error"] = info["error"]
     return resp
@@ -1014,7 +1241,7 @@ async def inspect(xlsx: UploadFile):
                     cnt = int((pd.to_numeric(col, errors='coerce').fillna(0.0) == 1).sum())
                 except Exception:
                     cnt = int((col.astype(str).str.strip() == '1').sum())
-                subjects.append({"name": c, "count": cnt})
+            subjects.append({"name": c, "count": cnt, "group": ""})
             subjects.sort(key=lambda x: (-x["count"], x["name"]))
             return {"groups": [], "semesters": [], "subjects": subjects, "headcount": headcount, "class_count": len(classes)}
 
@@ -1079,7 +1306,8 @@ async def inspect(xlsx: UploadFile):
                 cnt = int((pd.to_numeric(col, errors='coerce').fillna(0.0) == 1).sum())
             except Exception:
                 cnt = int((col.astype(str).str.strip() == '1').sum())
-            subj_counts.append({"name": sname, "count": cnt})
+            group_val = grps[j] if j < len(grps) and grps[j] else ""
+            subj_counts.append({"name": sname, "count": cnt, "group": group_val})
         subj_counts.sort(key=lambda x: (-x["count"], x["name"]))
 
         # headcount and class_count by student id across A/B/C

@@ -1,0 +1,21 @@
+=== Optimization Report (OR-Tools CP-SAT) ===
+Solver status: FEASIBLE
+Students: 113 | Subjects: 13
+Slots: 4 | Rooms/slot: 5 | Extra allowed/slot: 1
+
+Total assignments: 436
+Total unassigned (student-subject pairs): 16
+Students with at least one unassigned: 16
+Lexicographic phase1 status: FEASIBLE | min_unassigned=18
+
+Slot usage:
+  - slot a: sections_open=5 (limit=5)
+  - slot b: sections_open=5 (limit=5)
+  - slot c: sections_open=5 (limit=5)
+  - slot d: sections_open=5 (limit=5)
+
+Constraints input summary: provided_keys=1 mapped_subjects=1
+Unmatched constraint keys: (none)
+
+Per-subject constraints (applied) and opened sections:
+  - 미술 창작: per_slot<=NA total<=2 | opened_by_slot=[0, 0, 1, 1] total=2

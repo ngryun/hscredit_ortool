@@ -1,0 +1,25 @@
+=== Optimization Report (OR-Tools CP-SAT) ===
+
+⚠ FEASIBLE SOLUTION (시간 내 최선해)
+  → 시간 제한으로 인해 최적성이 보장되지 않습니다.
+  → 더 나은 해가 존재할 수 있습니다.
+
+Students: 113 | Subjects: 13
+Slots: 4 | Rooms/slot: 5 | Extra allowed/slot: 1
+
+Total assignments: 439
+Total unassigned (student-subject pairs): 13
+Students with at least one unassigned: 13
+Lexicographic phase1 status: FEASIBLE | min_unassigned=13
+
+Slot usage:
+  - slot a: sections_open=5 (limit=5)
+  - slot b: sections_open=5 (limit=5)
+  - slot c: sections_open=6 (limit=5)
+  - slot d: sections_open=5 (limit=5)
+
+Constraints input summary: provided_keys=1 mapped_subjects=1
+Unmatched constraint keys: (none)
+
+Per-subject constraints (applied) and opened sections:
+  - 일본어: per_slot<=1 total<=NA | opened_by_slot=[1, 1, 1, 0] total=3

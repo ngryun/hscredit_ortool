@@ -1,0 +1,27 @@
+=== Optimization Report (OR-Tools CP-SAT) ===
+
+✓ OPTIMAL SOLUTION FOUND (최적해 보장)
+  → 더 나은 해는 존재하지 않습니다.
+
+Phase 1 (미배정 최소화): OPTIMAL | min_unassigned=0
+Phase 2 (용량/균형 최적화): OPTIMAL
+
+Students: 113 | Subjects: 13
+Slots: 4 | Rooms/slot: 5 | Extra allowed/slot: 1
+
+Total assignments: 452
+Total unassigned (student-subject pairs): 0
+Students with at least one unassigned: 0
+
+Slot usage:
+  - slot a: sections_open=6 (limit=5)
+  - slot b: sections_open=6 (limit=5)
+  - slot c: sections_open=6 (limit=5)
+  - slot d: sections_open=6 (limit=5)
+
+Constraints input summary: provided_keys=2 mapped_subjects=2
+Unmatched constraint keys: (none)
+
+Per-subject constraints (applied) and opened sections:
+  - 미술 창작: per_slot<=NA total<=2 | opened_by_slot=[1, 0, 1, 0] total=2
+  - 지구과학: per_slot<=NA total<=1 | opened_by_slot=[0, 0, 0, 1] total=1

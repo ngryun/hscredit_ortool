@@ -113,6 +113,26 @@ def load_subject_constraints_override(path: Optional[str]) -> Dict[str, SubjectC
     return subs
 
 
+def load_fixed_sections_csv(path: Optional[str]) -> Dict[str, int]:
+    if not path:
+        return {}
+    df = pd.read_csv(path)
+    cols = {c.lower(): c for c in df.columns}
+    subs = {}
+    for _, r in df.iterrows():
+        subj = str(r[cols.get("subject", "subject")]).strip()
+        if not subj or subj.lower() == "nan":
+            continue
+        val_col = cols.get("total_sections") or cols.get("total") or cols.get("sections")
+        if not val_col:
+            continue
+        val = r[val_col]
+        if pd.isna(val) or str(val).strip() == "":
+            continue
+        subs[subj] = int(val)
+    return subs
+
+
 def read_students_xlsx(xlsx_path: str, target_group: Optional[str] = None) -> Tuple[List[Dict], List[str]]:
     """Read students + choices from Excel, supporting multiple formats.
 
@@ -307,7 +327,9 @@ def build_and_solve(students: List[Dict],
                     time_limit_s: float,
                     num_workers: int,
                     extra_total_limit: Optional[int] = None,
-                    subject_constraints_csv: Optional[str] = None) -> Tuple[pd.DataFrame, pd.DataFrame, str]:
+                    subject_constraints_csv: Optional[str] = None,
+                    phase1_time_ratio: float = 0.9,
+                    fixed_sections_csv: Optional[str] = None) -> Tuple[pd.DataFrame, pd.DataFrame, str]:
     # Demand order helps with stable post-processing
     demand = Counter()
     for s in students:
@@ -330,6 +352,8 @@ def build_and_solve(students: List[Dict],
     subs_constraints_raw = load_subject_constraints_override(subject_constraints_csv)
     _raw_constraints_count = len(subs_constraints_raw)
     print(f"[DEBUG] Loaded {_raw_constraints_count} subject constraints from {subject_constraints_csv}")
+    fixed_sections_raw = load_fixed_sections_csv(fixed_sections_csv)
+    print(f"[DEBUG] Loaded {len(fixed_sections_raw)} fixed-section entries from {fixed_sections_csv}")
 
     # Build a robust mapping from CSV subject keys -> actual subject names used by the model.
     # This tolerates whitespace differences and optional disambiguation tags like " [..]" or " (2)".
@@ -357,6 +381,8 @@ def build_and_solve(students: List[Dict],
     unmatched_subject_keys: List[str] = []
     mapped_pairs: List[Tuple[str, str]] = []
     mapped_multi: List[Tuple[str, List[str]]] = []
+    fixed_sections_resolved: Dict[str, int] = {}
+    unmatched_fixed_keys: List[str] = []
 
     # First pass: exact (normalized) matches take priority
     for key, cons in subs_constraints_raw.items():
@@ -398,6 +424,24 @@ def build_and_solve(students: List[Dict],
         print(f"[WARN] {len(unmatched_subject_keys)} constraint subject(s) did not match any model subject:")
         for k in unmatched_subject_keys:
             print(f"[WARN]   - '{k}' (no match)")
+
+    # Map fixed section totals to actual subjects
+    for key, val in fixed_sections_raw.items():
+        try:
+            ival = int(val)
+        except Exception:
+            continue
+        k_full = _norm(key)
+        if k_full in norm_full_to_actual:
+            fixed_sections_resolved[norm_full_to_actual[k_full]] = ival
+            continue
+        k_base = _norm(_strip_tags(key))
+        cand = base_to_actual.get(k_base, [])
+        if not cand:
+            unmatched_fixed_keys.append(key)
+            continue
+        for dst in cand:
+            fixed_sections_resolved[dst] = ival
 
     # Build base-group aggregated constraints for multi-mapped subjects
     base_group_constraints: List[Tuple[str, SubjectConstraints, List[int]]] = []
@@ -444,6 +488,7 @@ def build_and_solve(students: List[Dict],
             chosen_map[u][t] = True
 
     # Variables
+    section_upper_bounds = {}
     for u in U_idx:
         for t in T_idx:
             if chosen_map[u][t]:
@@ -453,19 +498,50 @@ def build_and_solve(students: List[Dict],
 
     for t in T_idx:
         tname = subjects_sorted[t]
-        # Calculate realistic upper bound for sections based on demand
-        max_sections_needed = max(1, math.ceil(demand.get(tname, 0) / cap_of(tname))) if demand.get(tname, 0) > 0 else 10
-        # Allow some buffer beyond theoretical minimum (up to 2x or 10 sections, whichever is larger)
-        max_sections_upper = max(10, min(2 * max_sections_needed, 20))
-        # If a per-slot limit exists, also tighten the variable upper bound proactively
+        demand_t = demand.get(tname, 0)
+        cap_t = cap_of(tname)
+        maxcap_t = maxcap_of(tname)
+        fixed_total = fixed_sections_resolved.get(tname)
+        if demand_t > 0:
+            preferred_sections = math.ceil(demand_t / max(1, cap_t))
+            min_sections_cap = math.ceil(demand_t / max(1, maxcap_t))
+            buffer = 1 if preferred_sections <= 2 else 2
+            total_upper_candidate = preferred_sections + buffer
+        else:
+            preferred_sections = 0
+            min_sections_cap = 0
+            total_upper_candidate = 0
+        if fixed_total is not None:
+            total_lower = max(0, int(fixed_total))
+            total_upper = total_lower
+        else:
+            total_lower = min_sections_cap
+            total_upper = max(total_lower, total_upper_candidate)
         mps = max_sections_per_slot_of(tname)
         if mps is not None and mps >= 0:
-            max_sections_upper = min(max_sections_upper, int(mps))
+            total_upper = min(total_upper, int(mps) * S)
+        max_total_limit = max_total_sections_of(tname)
+        if max_total_limit is not None and max_total_limit >= 0:
+            total_upper = min(total_upper, int(max_total_limit))
+        if demand_t == 0 and fixed_total is None:
+            total_upper = 0
+        total_upper = max(total_upper, total_lower)
+        section_upper_bounds[t] = total_upper
 
         for s in S_idx:
-            n[(t,s)] = model.NewIntVar(0, max_sections_upper, f"n_t{t}_s{s}")
-            over[(t,s)] = model.NewIntVar(0, (maxcap_of(tname)-cap_of(tname))*max_sections_upper,
+            slot_upper = total_upper
+            if demand_t > 0:
+                per_slot_load = math.ceil(demand_t / max(1, S))
+                slot_upper = min(slot_upper, per_slot_load + 1)
+            if mps is not None and mps >= 0:
+                slot_upper = min(slot_upper, int(mps))
+            slot_upper = min(slot_upper, rooms_per_slot + extra_rooms_per_slot)
+            slot_upper = max(0, slot_upper)
+            n[(t,s)] = model.NewIntVar(0, slot_upper, f"n_t{t}_s{s}")
+            over[(t,s)] = model.NewIntVar(0, (maxcap_t-cap_t)*slot_upper,
                                           f"over_t{t}_s{s}")
+        if fixed_total is None and total_upper > 0:
+            model.Add(sum(n[(t,s)] for s in S_idx) <= total_upper)
     for s in S_idx:
         extra[s] = model.NewIntVar(0, extra_rooms_per_slot, f"extra_s{s}")
 
@@ -529,49 +605,121 @@ def build_and_solve(students: List[Dict],
             print(f"[DEBUG] Adding AGG max_total for base '{src}' over subjects {idxs}: {val}")
             model.Add(sum(n[(t,s)] for t in idxs for s in S_idx) <= val)
 
-    # Objective
-    # Priority: minimize unassigned >> minimize overcapacity >> minimize extra rooms
-    # Adjusted weights to strongly prefer opening extra rooms over leaving students unassigned
-    W1 = 10**9  # Unassigned penalty (highest priority - increased)
-    W2 = 10**3  # Overcapacity penalty (moderate - reduced to allow more flexibility)
-    W3 = 10**2  # Extra rooms penalty (lowest - significantly reduced to encourage opening more sections)
+    # Fixed total sections (from UI/CSV)
+    for t in T_idx:
+        tname = subjects_sorted[t]
+        if tname in fixed_sections_resolved:
+            val = int(fixed_sections_resolved[tname])
+            print(f"[DEBUG] Fixing total sections for {tname} to {val}")
+            model.Add(sum(n[(t,s)] for s in S_idx) == val)
+
+    # Lexicographic solve: phase1 minimizes unassigned count, phase2 minimizes overflow/extra subject to phase1 optimum.
+    sum_unassigned_expr = sum(uMiss[(u,t)] for (u,t) in uMiss.keys()) if uMiss else None
+    best_unassigned = None
+    phase1_status = None
+    phase1_status_name = "SKIPPED"
+    phase1_time_used = 0.0
+    if sum_unassigned_expr is not None:
+        model.Minimize(sum_unassigned_expr)
+        solver_phase1 = cp_model.CpSolver()
+        if time_limit_s and time_limit_s > 0:
+            ratio = phase1_time_ratio if phase1_time_ratio is not None else 0.6
+            ratio = max(0.05, min(0.95, float(ratio)))
+            min_block = 5.0
+            time_budget_phase1 = min(float(time_limit_s), max(min_block, float(time_limit_s) * ratio))
+            solver_phase1.parameters.max_time_in_seconds = time_budget_phase1
+        if num_workers and num_workers > 0:
+            solver_phase1.parameters.num_search_workers = int(num_workers)
+        try:
+            solver_phase1.parameters.linearization_level = 2
+        except AttributeError:
+            pass
+        try:
+            solver_phase1.parameters.cp_model_presolve = True
+        except AttributeError:
+            pass
+        class Phase1Progress(cp_model.CpSolverSolutionCallback):
+            def __init__(self, uMiss_vars: Dict[tuple, cp_model.IntVar]):
+                super().__init__()
+                self._solutions = 0
+                self._uMiss_vars = list(uMiss_vars.values())
+                self.best = None
+            def OnSolutionCallback(self):
+                self._solutions += 1
+                try:
+                    unassigned = 0
+                    for v in self._uMiss_vars:
+                        unassigned += int(self.Value(v))
+                    if self.best is None or unassigned < self.best:
+                        self.best = unassigned
+                    payload = {
+                        "stage": "phase1",
+                        "solutions": self._solutions,
+                        "wall_time": float(self.WallTime()),
+                        "objective": float(self.ObjectiveValue()),
+                        "unassigned": int(unassigned),
+                    }
+                    print("[PROGRESS] " + json.dumps(payload, ensure_ascii=False), flush=True)
+                except Exception:
+                    pass
+
+        phase1_cb = Phase1Progress(uMiss)
+        solver_phase1.parameters.log_to_stdout = False
+        solver_phase1.parameters.log_search_progress = False
+        phase1_status = solver_phase1.Solve(model, phase1_cb)
+        phase1_status_name = solver_phase1.StatusName(phase1_status)
+        phase1_time_used = solver_phase1.WallTime()
+        if phase1_status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+            raise RuntimeError(f"Phase1 solve failed: {phase1_status_name}")
+        best_unassigned = int(round(solver_phase1.ObjectiveValue()))
+        if phase1_status == cp_model.OPTIMAL:
+            model.Add(sum_unassigned_expr == best_unassigned)
+        else:
+            model.Add(sum_unassigned_expr <= best_unassigned)
+        model.ClearObjective()
+    else:
+        model.ClearObjective()
+
+    # Phase2 objective: keep unassigned fixed, then minimize overflow & extra rooms
+    W_OVER = 10**3
+    W_EXTRA = 10**2
     obj_terms = []
-    obj_terms += [W1 * uMiss[(u,t)] for (u,t) in uMiss.keys()]
-    obj_terms += [W2 * over[(t,s)] for t in T_idx for s in S_idx]
-    obj_terms += [W3 * extra[s] for s in S_idx]
+    obj_terms += [W_OVER * over[(t,s)] for t in T_idx for s in S_idx]
+    obj_terms += [W_EXTRA * extra[s] for s in S_idx]
     model.Minimize(sum(obj_terms))
 
-    # Solve
     solver = cp_model.CpSolver()
     if time_limit_s and time_limit_s > 0:
-        solver.parameters.max_time_in_seconds = float(time_limit_s)
+        remaining = float(time_limit_s)
+        if phase1_time_used > 0.0:
+            remaining = max(1.0, float(time_limit_s) - phase1_time_used)
+        solver.parameters.max_time_in_seconds = remaining
     if num_workers and num_workers > 0:
         solver.parameters.num_search_workers = int(num_workers)
 
-    # Enhanced solver parameters for better solution quality (version-safe)
     try:
-        solver.parameters.linearization_level = 2  # Aggressive linearization for better LP relaxation
+        solver.parameters.linearization_level = 2
     except AttributeError:
         pass
     try:
-        solver.parameters.cp_model_presolve = True  # Enable presolve
+        solver.parameters.cp_model_presolve = True
     except AttributeError:
         pass
 
-    # Emit real progress on each improving solution (solutions callback)
     class ProgressCallback(cp_model.CpSolverSolutionCallback):
-        def __init__(self, uMiss_vars: Dict[tuple, cp_model.IntVar]):
+        def __init__(self, stage: str, uMiss_vars: Dict[tuple, cp_model.IntVar]):
             super().__init__()
             self._solutions = 0
+            self._stage = stage
             self._uMiss_vars = list(uMiss_vars.values())
         def OnSolutionCallback(self):
             self._solutions += 1
             try:
                 unassigned = 0
                 for v in self._uMiss_vars:
-                    # Boolean var; Value is 0/1
                     unassigned += int(self.Value(v))
                 payload = {
+                    "stage": self._stage,
                     "solutions": self._solutions,
                     "wall_time": float(self.WallTime()),
                     "objective": float(self.ObjectiveValue()),
@@ -579,10 +727,9 @@ def build_and_solve(students: List[Dict],
                 }
                 print("[PROGRESS] " + json.dumps(payload, ensure_ascii=False), flush=True)
             except Exception:
-                # Best-effort progress; ignore callback errors
                 pass
 
-    cb = ProgressCallback(uMiss)
+    cb = ProgressCallback("phase2", uMiss)
     solver.parameters.log_to_stdout = False
     solver.parameters.log_search_progress = False
     status = solver.Solve(model, cb)
@@ -709,18 +856,44 @@ def build_and_solve(students: List[Dict],
     students_with_unassigned = assignments_df[assignments_df["status"]=="unassigned"]["student_id"].nunique()
     rep_lines = []
     rep_lines.append("=== Optimization Report (OR-Tools CP-SAT) ===")
-    rep_lines.append(f"Solver status: {status_str}")
+    rep_lines.append("")
+
+    # Optimality status with clear messaging
+    if status == cp_model.OPTIMAL:
+        rep_lines.append("✓ OPTIMAL SOLUTION (최적해 보장)")
+        rep_lines.append("  → 더 나은 해는 존재하지 않습니다.")
+    elif status == cp_model.FEASIBLE:
+        rep_lines.append("⚠ FEASIBLE SOLUTION (시간 내 최선해)")
+        rep_lines.append("  → 시간 제한으로 인해 최적성이 보장되지 않습니다.")
+        rep_lines.append("  → 더 나은 해가 존재할 수 있습니다.")
+    else:
+        rep_lines.append(f"Solver status: {status_str}")
+
+    rep_lines.append("")
     rep_lines.append(f"Students: {len(students)} | Subjects: {len(subjects_all)}")
     rep_lines.append(f"Slots: {S} | Rooms/slot: {rooms_per_slot} | Extra allowed/slot: {extra_rooms_per_slot}")
     rep_lines.append("")
     rep_lines.append(f"Total assignments: {len(assignments_df)-total_unassigned}")
     rep_lines.append(f"Total unassigned (student-subject pairs): {total_unassigned}")
     rep_lines.append(f"Students with at least one unassigned: {students_with_unassigned}")
+    if sum_unassigned_expr is not None:
+        rep_lines.append(f"Lexicographic phase1 status: {phase1_status_name} | min_unassigned={best_unassigned if best_unassigned is not None else 'NA'}")
     rep_lines.append("")
     # Slot usage
     rep_lines.append("Slot usage:")
     for s in S_idx:
         rep_lines.append(f"  - slot {slot_labels[s]}: sections_open={slot_section_count.get(s,0)} (limit={rooms_per_slot})")
+
+    if fixed_sections_resolved:
+        rep_lines.append("")
+        rep_lines.append("Fixed total sections (사용자 지정):")
+        for subj, val in fixed_sections_resolved.items():
+            rep_lines.append(f"  - {subj}: total_sections={val}")
+    if unmatched_fixed_keys:
+        rep_lines.append("")
+        rep_lines.append("Fixed-section subjects without match:")
+        for key in unmatched_fixed_keys:
+            rep_lines.append(f"  - {key}")
 
     # Applied per-subject constraints summary (only constrained subjects)
     try:
@@ -786,10 +959,14 @@ def main():
     ap.add_argument("--caps-csv", default=None, help="Optional CSV with per-subject cap/maxcap overrides (columns: subject,cap,maxcap)")
     ap.add_argument("--constraints-csv", default=None, help="Optional CSV with per-subject section constraints (columns: subject,max_sections_per_slot,max_total_sections)")
     ap.add_argument("--group", default=None, help="Optional selection group filter for new Excel format (e.g., 'a').")
-    ap.add_argument("--time-limit", type=float, default=60.0, help="Solver time limit in seconds (default: 60)")
+    ap.add_argument("--time-limit", type=float, default=240.0, help="Solver time limit in seconds (default: 240)")
     ap.add_argument("--workers", type=int, default=8, help="Number of solver workers (default: 8)")
+    ap.add_argument("--phase1-ratio", type=float, default=0.9,
+                    help="Fraction (0~1) of overall time-limit reserved for phase1 (unassigned minimization). Default: 0.9")
     ap.add_argument("--extra-total", type=int, default=None,
                     help="Optional global limit on total extra rooms across all slots (e.g., with extra-per-slot=1 and extra-total=2, at most two slots get +1)")
+    ap.add_argument("--fixed-sections-csv", default=None,
+                    help="Optional CSV mapping subjects to fixed total sections (columns: subject,total_sections)")
     args = ap.parse_args()
 
     students, subjects = read_students_xlsx(args.input, target_group=args.group)
@@ -805,7 +982,9 @@ def main():
         time_limit_s=args.time_limit,
         num_workers=args.workers,
         extra_total_limit=args.extra_total,
-        subject_constraints_csv=args.constraints_csv
+        subject_constraints_csv=args.constraints_csv,
+        phase1_time_ratio=args.phase1_ratio,
+        fixed_sections_csv=args.fixed_sections_csv
     )
 
     out = Path(args.output_dir)

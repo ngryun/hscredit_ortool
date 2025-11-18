@@ -38,6 +38,13 @@ def write_constraints_csv(tmpdir: Path, rows: list[dict]) -> Path:
     return path
 
 
+def write_fixed_sections_csv(tmpdir: Path, rows: list[dict]) -> Path:
+    df = pd.DataFrame(rows)
+    path = tmpdir / "fixed_sections.csv"
+    df.to_csv(path, index=False)
+    return path
+
+
 def test_max_per_slot_limit_enforced():
     # Demand: 35 students all choose subject 'A'
     subjects = ["A"]
@@ -101,3 +108,32 @@ def test_max_total_limit_enforced():
         )
         total_A = int(sections_df[sections_df["subject"] == "A"]["num_sections"].sum())
         assert total_A <= 1
+
+
+def test_fixed_sections_enforced():
+    subjects = ["A"]
+    students = make_students(subjects, [["A"] for _ in range(40)])
+    with tempfile.TemporaryDirectory() as td:
+        tmp = Path(td)
+        fixed_path = write_fixed_sections_csv(tmp, [{
+            "subject": "A",
+            "total_sections": 2,
+        }])
+        sections_df, assignments_df, _ = build_and_solve(
+            students=students,
+            subjects_all=subjects,
+            slots_g=3,
+            rooms_per_slot=5,
+            extra_rooms_per_slot=1,
+            default_cap=28,
+            default_maxcap=30,
+            caps_override_csv=None,
+            time_limit_s=10.0,
+            num_workers=1,
+            extra_total_limit=None,
+            subject_constraints_csv=None,
+            phase1_time_ratio=0.5,
+            fixed_sections_csv=str(fixed_path),
+        )
+        total_opened = int(sections_df[sections_df["subject"] == "A"]["num_sections"].sum())
+        assert total_opened == 2

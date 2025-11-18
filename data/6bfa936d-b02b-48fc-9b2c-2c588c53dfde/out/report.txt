@@ -1,0 +1,21 @@
+=== Optimization Report (OR-Tools CP-SAT) ===
+
+✓ OPTIMAL SOLUTION (최적해 보장)
+  → 더 나은 해는 존재하지 않습니다.
+
+Students: 113 | Subjects: 13
+Slots: 4 | Rooms/slot: 5 | Extra allowed/slot: 1
+
+Total assignments: 437
+Total unassigned (student-subject pairs): 15
+Students with at least one unassigned: 15
+Lexicographic phase1 status: FEASIBLE | min_unassigned=15
+
+Slot usage:
+  - slot a: sections_open=5 (limit=5)
+  - slot b: sections_open=5 (limit=5)
+  - slot c: sections_open=5 (limit=5)
+  - slot d: sections_open=5 (limit=5)
+
+Constraints input summary: provided_keys=0 mapped_subjects=0
+Unmatched constraint keys: (none)
