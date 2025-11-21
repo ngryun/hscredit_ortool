@@ -179,9 +179,9 @@ def index():
 
               
               <div id=\"group-row\" class=\"mb-4 hidden\"> 
-                <label class=\"block text-sm font-medium text-stone-700 mb-1\">선택그룹</label>
-                <select id=\"group-select\" name=\"group\" class=\"w-full rounded-lg border border-stone-300 p-2 bg-white\"></select>
-                <p class=\"mt-1 text-xs text-stone-500\">선택그룹이 여러 개 감지되었습니다. 이동반 편성하고자 하는 선택그룹을 선택해주세요.</p>
+                <label class=\"block text-sm font-medium text-stone-700 mb-1\">선택그룹 (여러 개 선택 가능)</label>
+                <select id=\"group-select\" name=\"group\" multiple size=\"4\" class=\"w-full rounded-lg border border-stone-300 p-2 bg-white\"></select>
+                <p class=\"mt-1 text-xs text-stone-500\">여러 그룹을 포함하려면 Ctrl/Command 또는 Shift 키를 사용해 선택하세요. 아무 것도 선택하지 않으면 모든 그룹이 포함됩니다.</p>
               </div>
 
               <div id=\"inspect-wrap\" class=\"mb-4 hidden\">
@@ -336,12 +336,27 @@ def index():
         let subjectConstraints = {{}};  // subject name -> {{maxPerSlot}}
         let currentModalSubject = null;  // currently editing subject in modal
         let fixedSectionTargets = {{}};
-        let currentGroupFilter = '';
+        const normalizeGroupValue = (val) => (val === undefined || val === null) ? '' : String(val).trim();
+        let currentGroupFilter = new Set();
         let subjectCounts = {{}};
+
+        function applyGroupFilter(values) {{
+          const normalized = new Set((Array.isArray(values) ? values : []).map((v) => normalizeGroupValue(v)).filter(Boolean));
+          if (groupSel) {{
+            Array.from(groupSel.options || []).forEach((opt) => {{
+              const val = normalizeGroupValue(opt.value);
+              opt.selected = normalized.has(val);
+            }});
+          }}
+          currentGroupFilter = normalized;
+        }}
 
         if (groupSel) {{
           groupSel.addEventListener('change', () => {{
-            currentGroupFilter = (groupSel.value || '').trim();
+            const selected = Array.from(groupSel.selectedOptions || [])
+              .map((opt) => normalizeGroupValue(opt.value))
+              .filter(Boolean);
+            currentGroupFilter = new Set(selected);
             if (lastInspect) renderSubjectPreview(lastInspect);
           }});
         }}
@@ -466,9 +481,9 @@ def index():
         function renderSubjectPreview(info) {{
           try {{
             const subjects = Array.isArray(info?.subjects) ? info.subjects : [];
-            const activeGroup = (currentGroupFilter || '').trim();
-            const filtered = activeGroup
-              ? subjects.filter((s) => ((s?.group ?? '').toString().trim() === activeGroup))
+            const hasGroupFilter = currentGroupFilter && currentGroupFilter.size > 0;
+            const filtered = hasGroupFilter
+              ? subjects.filter((s) => currentGroupFilter.has(normalizeGroupValue(s?.group)))
               : subjects;
             const list = filtered.length ? filtered : subjects;
             if (!list.length) {{
@@ -631,8 +646,13 @@ def index():
 
         inputFile.addEventListener('change', async (e) => {{
           const f = e.target.files && e.target.files[0];
-          groupSel.innerHTML = '';
+          if (groupSel) {{
+            groupSel.innerHTML = '';
+            groupSel.multiple = false;
+            groupSel.size = 1;
+          }}
           groupRow.classList.add('hidden');
+          applyGroupFilter([]);
           fixedSectionTargets = {{}};
           subjectPreviewBody.innerHTML = '';
           subjectPreviewWrap.classList.add('hidden');
@@ -690,31 +710,35 @@ def index():
             inspectBody.innerHTML = '';
             inspectWrap.classList.add('hidden');
             // Group selection
-            if (groups.length > 1) {{
-              const placeholder = document.createElement('option');
-              placeholder.value = '';
-              placeholder.textContent = '전체 (모든 그룹)';
-              groupSel.appendChild(placeholder);
-              for (const g of groups) {{
+            if (groupSel) {{
+              groupSel.innerHTML = '';
+              if (groups.length > 1) {{
+                groupSel.multiple = true;
+                groupSel.size = Math.min(groups.length, 6);
+                for (const g of groups) {{
+                  const opt = document.createElement('option');
+                  opt.value = String(g);
+                  opt.textContent = String(g);
+                  groupSel.appendChild(opt);
+                }}
+                applyGroupFilter([]);
+                groupRow.classList.remove('hidden');
+              }} else if (groups.length === 1) {{
+                groupSel.multiple = false;
+                groupSel.size = 1;
                 const opt = document.createElement('option');
-                opt.value = String(g);
-                opt.textContent = String(g);
+                opt.value = String(groups[0]);
+                opt.textContent = String(groups[0]);
+                opt.selected = true;
                 groupSel.appendChild(opt);
+                applyGroupFilter([groups[0]]);
+                groupRow.classList.add('hidden');
+              }} else {{
+                groupSel.multiple = false;
+                groupSel.size = 1;
+                applyGroupFilter([]);
+                groupRow.classList.add('hidden');
               }}
-              groupSel.value = '';
-              currentGroupFilter = '';
-              groupRow.classList.remove('hidden');
-            }} else if (groups.length === 1) {{
-              const opt = document.createElement('option');
-              opt.value = String(groups[0]);
-              opt.textContent = String(groups[0]);
-              groupSel.appendChild(opt);
-              groupSel.value = String(groups[0]);
-              currentGroupFilter = String(groups[0]);
-              groupRow.classList.add('hidden');
-            }} else {{
-              currentGroupFilter = '';
-              groupRow.classList.add('hidden');
             }}
             renderSubjectPreview(lastInspect);
           }} catch (err) {{
@@ -1078,7 +1102,7 @@ async def run(request: Request):
     extra = int(form_data.get("extra", 1))
     cap = int(form_data.get("cap", 28))
     maxcap = int(form_data.get("maxcap", 30))
-    group = form_data.get("group")
+    raw_group = form_data.get("group")
     extra_total = form_data.get("extra_total")
     constraints_json = form_data.get("constraints_json")
     section_totals_json = form_data.get("section_totals_json")
@@ -1090,6 +1114,17 @@ async def run(request: Request):
     xlsx_path = job_dir / "input.xlsx"
     with open(xlsx_path, "wb") as f:
         f.write(await xlsx.read())
+
+    group_values = []
+    try:
+        group_values = [str(g).strip() for g in form_data.getlist("group") if str(g).strip()]
+    except AttributeError:
+        group_values = []
+    if not group_values and raw_group:
+        gval = str(raw_group).strip()
+        if gval:
+            group_values = [gval]
+    group = ",".join(group_values) if group_values else None
 
     # Handle optional constraints from JSON
     constraints_csv_path = None

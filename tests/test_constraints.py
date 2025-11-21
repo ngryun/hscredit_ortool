@@ -17,7 +17,9 @@ def _load_solver():
     return mod
 
 
-build_and_solve = _load_solver().build_and_solve
+_solver_mod = _load_solver()
+build_and_solve = _solver_mod.build_and_solve
+read_students_xlsx = _solver_mod.read_students_xlsx
 
 
 def make_students(subjects, choices_per_student):
@@ -42,6 +44,39 @@ def write_fixed_sections_csv(tmpdir: Path, rows: list[dict]) -> Path:
     df = pd.DataFrame(rows)
     path = tmpdir / "fixed_sections.csv"
     df.to_csv(path, index=False)
+    return path
+
+
+def write_grouped_xlsx(tmpdir: Path) -> Path:
+    rows = 8
+    cols = 7
+    data = [[None for _ in range(cols)] for _ in range(rows)]
+    # Semester row (index 1)
+    data[1][4] = "1학기"
+    data[1][5] = "1학기"
+    # Group row (index 2)
+    data[2][4] = "G1"
+    data[2][5] = "G2"
+    # Subject names (index 3)
+    data[3][4] = "Subject A"
+    data[3][5] = "Subject B"
+    # Unique ID row (index 4)
+    data[4][4] = "U1"
+    data[4][5] = "U2"
+    # Student rows (start at index 5)
+    data[5][2] = 30001
+    data[5][4] = 1
+    data[5][5] = 0
+    data[6][2] = 30002
+    data[6][4] = 0
+    data[6][5] = 1
+    data[7][2] = 30003
+    data[7][4] = 1
+    data[7][5] = 1
+    df = pd.DataFrame(data)
+    path = tmpdir / "grouped.xlsx"
+    with pd.ExcelWriter(path, engine="openpyxl") as writer:
+        df.to_excel(writer, header=False, index=False)
     return path
 
 
@@ -137,3 +172,21 @@ def test_fixed_sections_enforced():
         )
         total_opened = int(sections_df[sections_df["subject"] == "A"]["num_sections"].sum())
         assert total_opened == 2
+
+
+def test_multiple_groups_filtering():
+    with tempfile.TemporaryDirectory() as td:
+        tmp = Path(td)
+        xlsx = write_grouped_xlsx(tmp)
+        _, all_subjects = read_students_xlsx(str(xlsx))
+        assert set(all_subjects) == {"Subject A", "Subject B"}
+
+        students_g1, subjects_g1 = read_students_xlsx(str(xlsx), target_group="G1")
+        assert subjects_g1 == ["Subject A"]
+        assert all(all(choice != "Subject B" for choice in stu["choices"]) for stu in students_g1)
+
+        _, subjects_combo = read_students_xlsx(str(xlsx), target_group="G1,G2")
+        assert set(subjects_combo) == {"Subject A", "Subject B"}
+
+        _, subjects_list = read_students_xlsx(str(xlsx), target_group=["G1", "G2"])
+        assert set(subjects_list) == {"Subject A", "Subject B"}

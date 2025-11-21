@@ -41,7 +41,7 @@ import math
 from pathlib import Path
 from collections import Counter, defaultdict
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Iterable, Union
 import pandas as pd
 import warnings
 
@@ -133,7 +133,7 @@ def load_fixed_sections_csv(path: Optional[str]) -> Dict[str, int]:
     return subs
 
 
-def read_students_xlsx(xlsx_path: str, target_group: Optional[str] = None) -> Tuple[List[Dict], List[str]]:
+def read_students_xlsx(xlsx_path: str, target_group: Optional[Union[str, Iterable[str]]] = None) -> Tuple[List[Dict], List[str]]:
     """Read students + choices from Excel, supporting multiple formats.
 
     Supported formats:
@@ -151,6 +151,29 @@ def read_students_xlsx(xlsx_path: str, target_group: Optional[str] = None) -> Tu
 
     def norm(s):
         return " ".join(str(s).split())
+
+    def _norm_lower(x: Optional[str]) -> str:
+        return " ".join(str(x).split()).lower() if x is not None else ""
+
+    def _prepare_group_filter(raw: Optional[Union[str, Iterable[str]]]) -> Optional[set[str]]:
+        if raw is None:
+            return None
+        tokens: List[str] = []
+        if isinstance(raw, str):
+            cleaned = raw.replace("|", ",").replace(";", ",").replace("/", ",")
+            tokens = [seg.strip() for seg in cleaned.split(",")]
+        else:
+            try:
+                iterator = iter(raw)
+            except TypeError:
+                tokens = [str(raw)]
+            else:
+                for item in iterator:
+                    if item is None:
+                        continue
+                    tokens.append(str(item))
+        normalized = {_norm_lower(tok) for tok in tokens if _norm_lower(tok)}
+        return normalized or None
 
     # Try reading with header to detect original format quickly
     try:
@@ -246,19 +269,17 @@ def read_students_xlsx(xlsx_path: str, target_group: Optional[str] = None) -> Tu
         semesters.append(sem_s)
 
     # Build include mask by target_group
-    def _norm_lower(x: Optional[str]) -> str:
-        return " ".join(str(x).split()).lower() if x is not None else ""
-    tgt = _norm_lower(target_group) if target_group else None
+    target_groups = _prepare_group_filter(target_group)
     include_col: List[bool] = []  # aligned with columns E..end
     for j in range(len(subj_row)):
         subj = subjects[j] if j < len(subjects) else None
         if not subj:
             include_col.append(False)
             continue
-        if tgt is None:
+        if target_groups is None:
             include_col.append(True)
         else:
-            include_col.append(_norm_lower(groups[j] if j < len(groups) else None) == tgt)
+            include_col.append(_norm_lower(groups[j] if j < len(groups) else None) in target_groups)
 
     # Data rows start at row index 5
     students: List[Dict] = []
@@ -533,17 +554,24 @@ def build_and_solve(students: List[Dict],
             if demand_t > 0:
                 per_slot_load = math.ceil(demand_t / max(1, S))
                 slot_upper = min(slot_upper, per_slot_load + 1)
+                # Absolute maximum: if all students for this subject go to one slot
+                absolute_max = math.ceil(demand_t / max(1, cap_t))
+                slot_upper = min(slot_upper, absolute_max)
             if mps is not None and mps >= 0:
                 slot_upper = min(slot_upper, int(mps))
             slot_upper = min(slot_upper, rooms_per_slot + extra_rooms_per_slot)
             slot_upper = max(0, slot_upper)
             n[(t,s)] = model.NewIntVar(0, slot_upper, f"n_t{t}_s{s}")
-            over[(t,s)] = model.NewIntVar(0, (maxcap_t-cap_t)*slot_upper,
-                                          f"over_t{t}_s{s}")
-        if fixed_total is None and total_upper > 0:
+            # Tighter over bound: cannot exceed total demand for this subject
+            max_over = min((maxcap_t-cap_t)*slot_upper, demand_t)
+            over[(t,s)] = model.NewIntVar(0, max_over, f"over_t{t}_s{s}")
+        # Always add total sections constraint to reduce search space
+        if total_upper > 0:
             model.Add(sum(n[(t,s)] for s in S_idx) <= total_upper)
     for s in S_idx:
         extra[s] = model.NewIntVar(0, extra_rooms_per_slot, f"extra_s{s}")
+    for s in range(S - 1):
+        model.Add(extra[s] >= extra[s + 1])
 
     # Constraints
     # Student per slot: <=1
@@ -559,15 +587,28 @@ def build_and_solve(students: List[Dict],
             if chosen_map[u][t]:
                 model.Add(sum(a[(u,t,s)] for s in S_idx) + uMiss[(u,t)] == 1)
 
+    # Implied constraint: if student chooses more subjects than available slots,
+    # at least (num_choices - S) subjects must be unassigned
+    for u in U_idx:
+        num_choices = sum(1 for t in T_idx if chosen_map[u][t])
+        if num_choices > S:
+            min_unassigned = num_choices - S
+            uMiss_vars = [uMiss[(u,t)] for t in T_idx if chosen_map[u][t]]
+            model.Add(sum(uMiss_vars) >= min_unassigned)
+
     # Capacity linkage
     for t in T_idx:
         tname = subjects_sorted[t]
         cap_t = cap_of(tname)
         maxcap_t = maxcap_of(tname)
+        demand_t = demand.get(tname, 0)
         for s in S_idx:
             sum_assign = sum(a[(u,t,s)] for u in U_idx if chosen_map[u][t])
             model.Add(sum_assign <= cap_t * n[(t,s)] + over[(t,s)])
             model.Add(over[(t,s)] <= (maxcap_t - cap_t) * n[(t,s)])
+            # Empty section prevention: if a section is opened, at least 1 student must be assigned
+            if demand_t > 0:
+                model.Add(sum_assign >= n[(t,s)])
 
     # Rooms per slot
     for s in S_idx:
@@ -620,6 +661,12 @@ def build_and_solve(students: List[Dict],
     phase1_status_name = "SKIPPED"
     phase1_time_used = 0.0
     if sum_unassigned_expr is not None:
+        if uMiss:
+            model.AddDecisionStrategy(
+                list(uMiss.values()),
+                cp_model.CHOOSE_FIRST,
+                cp_model.SELECT_MIN_VALUE
+            )
         model.Minimize(sum_unassigned_expr)
         solver_phase1 = cp_model.CpSolver()
         if time_limit_s and time_limit_s > 0:
@@ -958,7 +1005,7 @@ def main():
     ap.add_argument("--maxcap", type=int, default=30, help="Default max capacity per section (default: 30)")
     ap.add_argument("--caps-csv", default=None, help="Optional CSV with per-subject cap/maxcap overrides (columns: subject,cap,maxcap)")
     ap.add_argument("--constraints-csv", default=None, help="Optional CSV with per-subject section constraints (columns: subject,max_sections_per_slot,max_total_sections)")
-    ap.add_argument("--group", default=None, help="Optional selection group filter for new Excel format (e.g., 'a').")
+    ap.add_argument("--group", default=None, help="Optional selection group filter(s) for new Excel format (e.g., 'a' or 'a,b').")
     ap.add_argument("--time-limit", type=float, default=240.0, help="Solver time limit in seconds (default: 240)")
     ap.add_argument("--workers", type=int, default=8, help="Number of solver workers (default: 8)")
     ap.add_argument("--phase1-ratio", type=float, default=0.9,

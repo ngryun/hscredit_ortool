@@ -1,0 +1,52 @@
+=== Optimization Report (OR-Tools CP-SAT) ===
+
+✓ OPTIMAL SOLUTION (최적해 보장)
+  → 더 나은 해는 존재하지 않습니다.
+
+Students: 122 | Subjects: 14
+Slots: 3 | Rooms/slot: 5 | Extra allowed/slot: 1
+
+Total assignments: 242
+Total unassigned (student-subject pairs): 0
+Students with at least one unassigned: 0
+Lexicographic phase1 status: OPTIMAL | min_unassigned=0
+
+Slot usage:
+  - slot a: sections_open=4 (limit=5)
+  - slot b: sections_open=4 (limit=5)
+  - slot c: sections_open=3 (limit=5)
+
+Fixed total sections (사용자 지정):
+  - 미술감상과 비평: total_sections=3
+  - 음악감상과 비평: total_sections=2
+  - 체육전공실기기초: total_sections=2
+  - 미디어콘텐츠일반: total_sections=1
+  - 생활과 과학: total_sections=1
+  - 여행지리: total_sections=1
+  - 마케팅과 광고: total_sections=1
+
+Fixed-section subjects without match:
+  - 확률과 통계
+  - 정치와 법
+  - 한국지리
+  - 심리학
+  - 언어와 매체
+  - 윤리와 사상
+  - 동아시아사
+  - 화법과 작문
+  - 영어회화
+  - 영어독해와 작문
+  - 지구과학Ⅱ
+  - 생명과학Ⅱ
+  - 실용경제
+  - 교육학
+  - 환경
+  - 미적분
+  - 화학Ⅱ
+  - 물리학Ⅱ
+
+Constraints input summary: provided_keys=1 mapped_subjects=1
+Unmatched constraint keys: (none)
+
+Per-subject constraints (applied) and opened sections:
+  - 미술감상과 비평: per_slot<=1 total<=NA | opened_by_slot=[1, 1, 1] total=3
