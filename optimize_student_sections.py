@@ -350,7 +350,15 @@ def build_and_solve(students: List[Dict],
                     extra_total_limit: Optional[int] = None,
                     subject_constraints_csv: Optional[str] = None,
                     phase1_time_ratio: float = 0.9,
-                    fixed_sections_csv: Optional[str] = None) -> Tuple[pd.DataFrame, pd.DataFrame, str]:
+                    fixed_sections_csv: Optional[str] = None,
+                    use_lexicographic: bool = False) -> Tuple[pd.DataFrame, pd.DataFrame, str]:
+    """
+    Build and solve the student-section assignment optimization problem.
+    
+    Args:
+        use_lexicographic: If True, use two-phase lexicographic optimization (legacy).
+                          If False (default), use unified weighted objective (recommended).
+    """
     # Demand order helps with stable post-processing
     demand = Counter()
     for s in students:
@@ -464,6 +472,9 @@ def build_and_solve(students: List[Dict],
         for dst in cand:
             fixed_sections_resolved[dst] = ival
 
+    # Pre-compute subject index mapping (needed for base_group_constraints)
+    subj_index = {t: i for i, t in enumerate(subjects_sorted)}
+
     # Build base-group aggregated constraints for multi-mapped subjects
     base_group_constraints: List[Tuple[str, SubjectConstraints, List[int]]] = []
     for src, dsts in mapped_multi:
@@ -502,7 +513,7 @@ def build_and_solve(students: List[Dict],
     # Build chosen map for speed
     # chosen_map[u][t] tells whether student u chose subject t
     chosen_map = [[False]*T for _ in range(U)]
-    subj_index = {t:i for i,t in enumerate(subjects_sorted)}
+    # Note: subj_index already defined above for base_group_constraints
     for u, stu in enumerate(students):
         for tname in stu["choices"]:
             t = subj_index[tname]
@@ -654,132 +665,261 @@ def build_and_solve(students: List[Dict],
             print(f"[DEBUG] Fixing total sections for {tname} to {val}")
             model.Add(sum(n[(t,s)] for s in S_idx) == val)
 
-    # Lexicographic solve: phase1 minimizes unassigned count, phase2 minimizes overflow/extra subject to phase1 optimum.
+    # ==========================================================================
+    # OPTIMIZATION STRATEGY (Improved v2)
+    # ==========================================================================
+    # Two modes available:
+    # 1. Unified objective (default): Single solve with weighted objectives
+    #    - More efficient, no wasted time between phases
+    #    - Guarantees unassigned minimization via very high weight
+    # 2. Lexicographic (legacy): Two-phase solve
+    #    - Phase1: minimize unassigned only
+    #    - Phase2: fix unassigned, minimize overflow/extra
+    # ==========================================================================
+    
     sum_unassigned_expr = sum(uMiss[(u,t)] for (u,t) in uMiss.keys()) if uMiss else None
     best_unassigned = None
     phase1_status = None
     phase1_status_name = "SKIPPED"
     phase1_time_used = 0.0
-    if sum_unassigned_expr is not None:
-        if uMiss:
-            model.AddDecisionStrategy(
-                list(uMiss.values()),
-                cp_model.CHOOSE_FIRST,
-                cp_model.SELECT_MIN_VALUE
-            )
-        model.Minimize(sum_unassigned_expr)
-        solver_phase1 = cp_model.CpSolver()
+    
+    # Weights for objectives
+    W_UNASSIGNED = 10**9  # Unassigned has absolute priority
+    W_OVER = 10**3        # Overflow penalty
+    W_EXTRA = 10**2       # Extra room penalty
+    
+    # Compute theoretical bounds for validation
+    total_choices = len(uMiss) if uMiss else 0
+    min_theoretical_unassigned = 0
+    for u in U_idx:
+        num_choices = sum(1 for t in T_idx if chosen_map[u][t])
+        if num_choices > S:
+            min_theoretical_unassigned += (num_choices - S)
+    
+    print(f"[INFO] Total student-subject pairs: {total_choices}")
+    print(f"[INFO] Theoretical minimum unassigned (due to slot limits): {min_theoretical_unassigned}")
+    print(f"[INFO] Optimization mode: {'LEXICOGRAPHIC (legacy)' if use_lexicographic else 'UNIFIED (recommended)'}")
+    
+    if use_lexicographic:
+        # ======================================================================
+        # LEXICOGRAPHIC MODE (Legacy, improved)
+        # ======================================================================
+        if sum_unassigned_expr is not None:
+            # Phase 1: Minimize unassigned only
+            model.Minimize(sum_unassigned_expr)
+            
+            solver_phase1 = cp_model.CpSolver()
+            if time_limit_s and time_limit_s > 0:
+                ratio = phase1_time_ratio if phase1_time_ratio is not None else 0.6
+                ratio = max(0.05, min(0.95, float(ratio)))
+                min_block = 5.0
+                time_budget_phase1 = min(float(time_limit_s), max(min_block, float(time_limit_s) * ratio))
+                solver_phase1.parameters.max_time_in_seconds = time_budget_phase1
+            if num_workers and num_workers > 0:
+                solver_phase1.parameters.num_search_workers = int(num_workers)
+            
+            try:
+                solver_phase1.parameters.linearization_level = 2
+            except AttributeError:
+                pass
+            try:
+                solver_phase1.parameters.cp_model_presolve = True
+            except AttributeError:
+                pass
+            
+            class Phase1Progress(cp_model.CpSolverSolutionCallback):
+                def __init__(self, uMiss_vars: Dict[tuple, cp_model.IntVar]):
+                    super().__init__()
+                    self._solutions = 0
+                    self._uMiss_vars = list(uMiss_vars.values())
+                    self.best = None
+                def OnSolutionCallback(self):
+                    self._solutions += 1
+                    try:
+                        unassigned = sum(int(self.Value(v)) for v in self._uMiss_vars)
+                        if self.best is None or unassigned < self.best:
+                            self.best = unassigned
+                        payload = {
+                            "stage": "phase1",
+                            "solutions": self._solutions,
+                            "wall_time": round(self.WallTime(), 2),
+                            "objective": float(self.ObjectiveValue()),
+                            "unassigned": int(unassigned),
+                        }
+                        print("[PROGRESS] " + json.dumps(payload, ensure_ascii=False), flush=True)
+                    except Exception:
+                        pass
+            
+            phase1_cb = Phase1Progress(uMiss)
+            solver_phase1.parameters.log_to_stdout = False
+            solver_phase1.parameters.log_search_progress = False
+            
+            print(f"[INFO] Phase1 starting (time_budget={time_budget_phase1:.1f}s)")
+            phase1_status = solver_phase1.Solve(model, phase1_cb)
+            phase1_status_name = "LEXICOGRAPHIC_P1_" + solver_phase1.StatusName(phase1_status)
+            phase1_time_used = solver_phase1.WallTime()
+            
+            if phase1_status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+                raise RuntimeError(f"Phase1 solve failed: {solver_phase1.StatusName(phase1_status)}")
+            
+            best_unassigned = int(round(solver_phase1.ObjectiveValue()))
+            print(f"[INFO] Phase1 completed: unassigned={best_unassigned}, time={phase1_time_used:.2f}s, status={solver_phase1.StatusName(phase1_status)}")
+            
+            # FIX: Always use == to preserve lexicographic property
+            # Even if FEASIBLE, we lock in the best found value to prevent Phase2 from degrading it
+            model.Add(sum_unassigned_expr == best_unassigned)
+            model.ClearObjective()
+        
+        # Phase 2: Minimize overflow and extra rooms
+        obj_terms = []
+        obj_terms += [W_OVER * over[(t,s)] for t in T_idx for s in S_idx]
+        obj_terms += [W_EXTRA * extra[s] for s in S_idx]
+        model.Minimize(sum(obj_terms))
+        
+        solver = cp_model.CpSolver()
         if time_limit_s and time_limit_s > 0:
-            ratio = phase1_time_ratio if phase1_time_ratio is not None else 0.6
-            ratio = max(0.05, min(0.95, float(ratio)))
-            min_block = 5.0
-            time_budget_phase1 = min(float(time_limit_s), max(min_block, float(time_limit_s) * ratio))
-            solver_phase1.parameters.max_time_in_seconds = time_budget_phase1
+            remaining = max(1.0, float(time_limit_s) - phase1_time_used)
+            solver.parameters.max_time_in_seconds = remaining
         if num_workers and num_workers > 0:
-            solver_phase1.parameters.num_search_workers = int(num_workers)
+            solver.parameters.num_search_workers = int(num_workers)
+        
         try:
-            solver_phase1.parameters.linearization_level = 2
+            solver.parameters.linearization_level = 2
         except AttributeError:
             pass
         try:
-            solver_phase1.parameters.cp_model_presolve = True
+            solver.parameters.cp_model_presolve = True
         except AttributeError:
             pass
-        class Phase1Progress(cp_model.CpSolverSolutionCallback):
-            def __init__(self, uMiss_vars: Dict[tuple, cp_model.IntVar]):
+        
+        class Phase2Progress(cp_model.CpSolverSolutionCallback):
+            def __init__(self, uMiss_vars, over_vars, extra_vars):
                 super().__init__()
                 self._solutions = 0
-                self._uMiss_vars = list(uMiss_vars.values())
-                self.best = None
+                self._uMiss_vars = list(uMiss_vars.values()) if uMiss_vars else []
+                self._over_vars = list(over_vars.values()) if over_vars else []
+                self._extra_vars = list(extra_vars.values()) if extra_vars else []
             def OnSolutionCallback(self):
                 self._solutions += 1
                 try:
-                    unassigned = 0
-                    for v in self._uMiss_vars:
-                        unassigned += int(self.Value(v))
-                    if self.best is None or unassigned < self.best:
-                        self.best = unassigned
+                    unassigned = sum(int(self.Value(v)) for v in self._uMiss_vars)
+                    total_over = sum(int(self.Value(v)) for v in self._over_vars)
+                    total_extra = sum(int(self.Value(v)) for v in self._extra_vars)
                     payload = {
-                        "stage": "phase1",
+                        "stage": "phase2",
                         "solutions": self._solutions,
-                        "wall_time": float(self.WallTime()),
+                        "wall_time": round(self.WallTime(), 2),
                         "objective": float(self.ObjectiveValue()),
-                        "unassigned": int(unassigned),
+                        "unassigned": unassigned,
+                        "overflow": total_over,
+                        "extra_rooms": total_extra,
                     }
                     print("[PROGRESS] " + json.dumps(payload, ensure_ascii=False), flush=True)
                 except Exception:
                     pass
-
-        phase1_cb = Phase1Progress(uMiss)
-        solver_phase1.parameters.log_to_stdout = False
-        solver_phase1.parameters.log_search_progress = False
-        phase1_status = solver_phase1.Solve(model, phase1_cb)
-        phase1_status_name = solver_phase1.StatusName(phase1_status)
-        phase1_time_used = solver_phase1.WallTime()
-        if phase1_status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-            raise RuntimeError(f"Phase1 solve failed: {phase1_status_name}")
-        best_unassigned = int(round(solver_phase1.ObjectiveValue()))
-        if phase1_status == cp_model.OPTIMAL:
-            model.Add(sum_unassigned_expr == best_unassigned)
-        else:
-            model.Add(sum_unassigned_expr <= best_unassigned)
-        model.ClearObjective()
+        
+        callback = Phase2Progress(uMiss, over, extra)
+        solver.parameters.log_to_stdout = False
+        solver.parameters.log_search_progress = False
+        
+        print(f"[INFO] Phase2 starting (time_remaining={remaining:.1f}s)")
+        status = solver.Solve(model, callback)
+        phase1_status_name = "LEXICOGRAPHIC_" + solver.StatusName(status)
+        
     else:
-        model.ClearObjective()
-
-    # Phase2 objective: keep unassigned fixed, then minimize overflow & extra rooms
-    W_OVER = 10**3
-    W_EXTRA = 10**2
-    obj_terms = []
-    obj_terms += [W_OVER * over[(t,s)] for t in T_idx for s in S_idx]
-    obj_terms += [W_EXTRA * extra[s] for s in S_idx]
-    model.Minimize(sum(obj_terms))
-
-    solver = cp_model.CpSolver()
-    if time_limit_s and time_limit_s > 0:
-        remaining = float(time_limit_s)
-        if phase1_time_used > 0.0:
-            remaining = max(1.0, float(time_limit_s) - phase1_time_used)
-        solver.parameters.max_time_in_seconds = remaining
-    if num_workers and num_workers > 0:
-        solver.parameters.num_search_workers = int(num_workers)
-
-    try:
-        solver.parameters.linearization_level = 2
-    except AttributeError:
-        pass
-    try:
-        solver.parameters.cp_model_presolve = True
-    except AttributeError:
-        pass
-
-    class ProgressCallback(cp_model.CpSolverSolutionCallback):
-        def __init__(self, stage: str, uMiss_vars: Dict[tuple, cp_model.IntVar]):
-            super().__init__()
-            self._solutions = 0
-            self._stage = stage
-            self._uMiss_vars = list(uMiss_vars.values())
-        def OnSolutionCallback(self):
-            self._solutions += 1
-            try:
-                unassigned = 0
-                for v in self._uMiss_vars:
-                    unassigned += int(self.Value(v))
-                payload = {
-                    "stage": self._stage,
-                    "solutions": self._solutions,
-                    "wall_time": float(self.WallTime()),
-                    "objective": float(self.ObjectiveValue()),
-                    "unassigned": int(unassigned),
-                }
-                print("[PROGRESS] " + json.dumps(payload, ensure_ascii=False), flush=True)
-            except Exception:
-                pass
-
-    cb = ProgressCallback("phase2", uMiss)
-    solver.parameters.log_to_stdout = False
-    solver.parameters.log_search_progress = False
-    status = solver.Solve(model, cb)
+        # ======================================================================
+        # UNIFIED MODE (Recommended)
+        # ======================================================================
+        # Build unified objective with priority weights
+        obj_terms = []
+        if sum_unassigned_expr is not None:
+            obj_terms.append(W_UNASSIGNED * sum_unassigned_expr)
+        obj_terms += [W_OVER * over[(t,s)] for t in T_idx for s in S_idx]
+        obj_terms += [W_EXTRA * extra[s] for s in S_idx]
+        
+        model.Minimize(sum(obj_terms))
+        
+        # Configure solver
+        solver = cp_model.CpSolver()
+        if time_limit_s and time_limit_s > 0:
+            solver.parameters.max_time_in_seconds = float(time_limit_s)
+        if num_workers and num_workers > 0:
+            solver.parameters.num_search_workers = int(num_workers)
+        
+        # Solver tuning
+        try:
+            solver.parameters.linearization_level = 2
+        except AttributeError:
+            pass
+        try:
+            solver.parameters.cp_model_presolve = True
+        except AttributeError:
+            pass
+        
+        # Progress callback with detailed tracking
+        class UnifiedProgressCallback(cp_model.CpSolverSolutionCallback):
+            def __init__(self, uMiss_vars: Dict[tuple, cp_model.IntVar],
+                         over_vars: Dict[tuple, cp_model.IntVar],
+                         extra_vars: Dict[int, cp_model.IntVar]):
+                super().__init__()
+                self._solutions = 0
+                self._uMiss_vars = list(uMiss_vars.values()) if uMiss_vars else []
+                self._over_vars = list(over_vars.values()) if over_vars else []
+                self._extra_vars = list(extra_vars.values()) if extra_vars else []
+                self.best_unassigned = None
+                self.best_over = None
+                self.best_extra = None
+                
+            def OnSolutionCallback(self):
+                self._solutions += 1
+                try:
+                    unassigned = sum(int(self.Value(v)) for v in self._uMiss_vars)
+                    total_over = sum(int(self.Value(v)) for v in self._over_vars)
+                    total_extra = sum(int(self.Value(v)) for v in self._extra_vars)
+                    
+                    # Track improvements
+                    improved = []
+                    if self.best_unassigned is None or unassigned < self.best_unassigned:
+                        improved.append("unassigned")
+                        self.best_unassigned = unassigned
+                    if self.best_over is None or total_over < self.best_over:
+                        if "unassigned" not in improved:
+                            improved.append("overflow")
+                        self.best_over = total_over
+                    if self.best_extra is None or total_extra < self.best_extra:
+                        if not improved:
+                            improved.append("extra")
+                        self.best_extra = total_extra
+                    
+                    payload = {
+                        "stage": "unified",
+                        "solutions": self._solutions,
+                        "wall_time": round(self.WallTime(), 2),
+                        "objective": float(self.ObjectiveValue()),
+                        "unassigned": unassigned,
+                        "overflow": total_over,
+                        "extra_rooms": total_extra,
+                        "improved": improved if improved else None,
+                    }
+                    print("[PROGRESS] " + json.dumps(payload, ensure_ascii=False), flush=True)
+                except Exception as e:
+                    print(f"[WARN] Callback error: {e}", flush=True)
+        
+        callback = UnifiedProgressCallback(uMiss, over, extra)
+        solver.parameters.log_to_stdout = False
+        solver.parameters.log_search_progress = False
+        
+        print(f"[INFO] Starting unified optimization (time_limit={time_limit_s}s, workers={num_workers})")
+        status = solver.Solve(model, callback)
+        
+        # Extract best_unassigned from solution
+        if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+            best_unassigned = sum(int(solver.Value(v)) for v in uMiss.values()) if uMiss else 0
+            phase1_status_name = "UNIFIED_" + solver.StatusName(status)
+            print(f"[INFO] Optimization completed: status={solver.StatusName(status)}, "
+                  f"unassigned={best_unassigned}, time={solver.WallTime():.2f}s")
+    
+    # Common: extract status string
     status_str = solver.StatusName(status)
 
     # Extract
@@ -924,7 +1064,8 @@ def build_and_solve(students: List[Dict],
     rep_lines.append(f"Total unassigned (student-subject pairs): {total_unassigned}")
     rep_lines.append(f"Students with at least one unassigned: {students_with_unassigned}")
     if sum_unassigned_expr is not None:
-        rep_lines.append(f"Lexicographic phase1 status: {phase1_status_name} | min_unassigned={best_unassigned if best_unassigned is not None else 'NA'}")
+        rep_lines.append(f"Optimization method: {phase1_status_name} | min_unassigned={best_unassigned if best_unassigned is not None else 'NA'}")
+        rep_lines.append(f"Theoretical minimum unassigned (slot limits): {min_theoretical_unassigned}")
     rep_lines.append("")
     # Slot usage
     rep_lines.append("Slot usage:")
@@ -1009,11 +1150,13 @@ def main():
     ap.add_argument("--time-limit", type=float, default=240.0, help="Solver time limit in seconds (default: 240)")
     ap.add_argument("--workers", type=int, default=8, help="Number of solver workers (default: 8)")
     ap.add_argument("--phase1-ratio", type=float, default=0.9,
-                    help="Fraction (0~1) of overall time-limit reserved for phase1 (unassigned minimization). Default: 0.9")
+                    help="[DEPRECATED] No longer used in unified optimization mode. Kept for backward compatibility.")
     ap.add_argument("--extra-total", type=int, default=None,
                     help="Optional global limit on total extra rooms across all slots (e.g., with extra-per-slot=1 and extra-total=2, at most two slots get +1)")
     ap.add_argument("--fixed-sections-csv", default=None,
                     help="Optional CSV mapping subjects to fixed total sections (columns: subject,total_sections)")
+    ap.add_argument("--use-lexicographic", action="store_true",
+                    help="Use legacy two-phase lexicographic optimization instead of unified objective (default: unified)")
     args = ap.parse_args()
 
     students, subjects = read_students_xlsx(args.input, target_group=args.group)
@@ -1031,7 +1174,8 @@ def main():
         extra_total_limit=args.extra_total,
         subject_constraints_csv=args.constraints_csv,
         phase1_time_ratio=args.phase1_ratio,
-        fixed_sections_csv=args.fixed_sections_csv
+        fixed_sections_csv=args.fixed_sections_csv,
+        use_lexicographic=args.use_lexicographic
     )
 
     out = Path(args.output_dir)
