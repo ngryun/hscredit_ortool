@@ -1061,8 +1061,8 @@ async def run_optimizer(job_id: str, xlsx_path: Path, out_dir: Path,
             "--extra-rooms-per-slot", str(extra),
             "--cap", str(cap),
             "--maxcap", str(maxcap),
-            "--time-limit", "240",
-            "--workers", "8"  # 머신 코어/워커 수에 맞춰 조정
+            "--time-limit", "600",
+            "--workers", "2"  # Lightsail 2 vCPU에 최적화
         ]
         if group:
             cmd += ["--group", str(group)]
