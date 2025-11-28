@@ -1135,6 +1135,142 @@ def build_and_solve(students: List[Dict],
     return sections_plan_df, assignments_df, report_text
 
 
+def generate_filled_template(input_xlsx: str, assignments_csv: str, output_xlsx: str):
+    """
+    원본 입력 엑셀 파일 양식에 배정 결과를 채워 넣은 파일 생성
+    - 배정된 경우: 슬롯 표시 (예: "a")
+    - 미배정된 경우: "미배정" 표시
+    두 가지 형식 지원: 간단한 형식 및 신규 수강신청 프로그램 형식
+    """
+    import pandas as pd
+    import openpyxl
+
+    print(f"[DEBUG] Generating filled template from {input_xlsx}")
+
+    def norm(s):
+        return " ".join(str(s).split())
+
+    # assignments.csv에서 배정 정보 읽기
+    df_asg = pd.read_csv(assignments_csv)
+    print(f"[DEBUG] Loaded {len(df_asg)} assignment records")
+
+    # 학생별 과목별 배정 정보를 딕셔너리로 저장
+    # key: (student_id, subject) -> value: slot (배정됨) or "미배정"
+    assignment_map = {}
+    for _, row in df_asg.iterrows():
+        # 학번을 숫자로 변환 (소수점 제거)
+        try:
+            student_id = str(int(float(row['student_id'])))
+        except:
+            student_id = str(row['student_id']).strip()
+
+        subject = str(row['subject']).strip()
+        status = str(row['status']).strip()
+        slot = str(row['slot']).strip() if pd.notna(row.get('slot')) else ''
+
+        if status == 'assigned' and slot:
+            assignment_map[(student_id, subject)] = slot
+        else:
+            assignment_map[(student_id, subject)] = '미배정'
+
+    print(f"[DEBUG] Built assignment map with {len(assignment_map)} entries")
+
+    # 원본 엑셀 파일 읽기
+    wb = openpyxl.load_workbook(input_xlsx)
+    ws = wb.active
+
+    # 형식 감지: 간단한 형식 vs 신규 형식
+    first_cell = ws.cell(1, 1).value
+    is_new_format = first_cell and "고유번호" in str(first_cell)
+
+    updated_count = 0
+
+    if is_new_format:
+        print("[DEBUG] Detected new format (신규 수강신청 프로그램)")
+        # 신규 형식: Row 4에 과목명, Row 6부터 학생 데이터
+        # 과목명과 열 인덱스 매핑 (Row 4, Col 5부터)
+        subject_cols = {}
+        for col_idx in range(5, ws.max_column + 1):
+            cell = ws.cell(4, col_idx)
+            if cell.value:
+                subject_name = norm(cell.value)
+                subject_cols[col_idx] = subject_name
+
+        print(f"[DEBUG] Found {len(subject_cols)} subject columns in new format")
+
+        # 학생 데이터 처리 (Row 6부터)
+        for row_idx in range(6, ws.max_row + 1):
+            student_id_cell = ws.cell(row_idx, 1)
+            if not student_id_cell.value:
+                continue
+
+            # 학번 변환
+            try:
+                student_id = str(int(float(student_id_cell.value)))
+            except:
+                student_id = str(student_id_cell.value).strip()
+
+            # 각 과목 열 처리
+            for col_idx, subject in subject_cols.items():
+                cell = ws.cell(row_idx, col_idx)
+                original_value = cell.value
+
+                # 원래 1이었던 경우 (선택한 과목)
+                if original_value == 1 or (isinstance(original_value, (int, float)) and original_value == 1.0):
+                    key = (student_id, subject)
+                    if key in assignment_map:
+                        cell.value = assignment_map[key]
+                        updated_count += 1
+                    else:
+                        cell.value = '미배정'
+                        updated_count += 1
+
+    else:
+        print("[DEBUG] Detected simple format")
+        # 간단한 형식: Row 1에 헤더, Row 2부터 데이터
+        subject_cols = {}
+        for col_idx in range(3, ws.max_column + 1):
+            cell = ws.cell(1, col_idx)
+            if cell.value:
+                subject_name = norm(cell.value)
+                subject_cols[col_idx] = subject_name
+
+        print(f"[DEBUG] Found {len(subject_cols)} subject columns in simple format")
+
+        # 각 학생 행 처리 (2행부터)
+        for row_idx in range(2, ws.max_row + 1):
+            student_id_cell = ws.cell(row_idx, 1)
+            if not student_id_cell.value:
+                continue
+
+            # 학번 변환
+            try:
+                student_id = str(int(float(student_id_cell.value)))
+            except:
+                student_id = str(student_id_cell.value).strip()
+
+            # 각 과목 열 처리
+            for col_idx, subject in subject_cols.items():
+                cell = ws.cell(row_idx, col_idx)
+                original_value = cell.value
+
+                # 원래 1이었던 경우 (선택한 과목)
+                if original_value == 1 or (isinstance(original_value, str) and original_value.strip() == '1'):
+                    key = (student_id, subject)
+                    if key in assignment_map:
+                        cell.value = assignment_map[key]
+                        updated_count += 1
+                    else:
+                        cell.value = '미배정'
+                        updated_count += 1
+
+    print(f"[DEBUG] Updated {updated_count} cells")
+
+    # 새 파일로 저장
+    wb.save(output_xlsx)
+    print(f"[DEBUG] Saved to {output_xlsx}")
+
+
 def main():
     ap = argparse.ArgumentParser(description="Student sectioning optimizer (CP-SAT).")
     ap.add_argument("--input", required=True, help="Input Excel (.xlsx): A=학번, B=이름, C..=subjects (1/0)")
@@ -1192,6 +1328,11 @@ def main():
     print(" -", sections_path)
     print(" -", assignments_path)
     print(" -", report_path)
+
+    # 원본 양식에 배정 결과를 채운 엑셀 파일 생성
+    filled_path = out / "filled_template.xlsx"
+    generate_filled_template(args.input, assignments_path, filled_path)
+    print(" -", filled_path)
 
 
 if __name__ == "__main__":

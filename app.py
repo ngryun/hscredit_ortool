@@ -1,8 +1,10 @@
 # app.py  (Redis 없이 동시 실행 제한 버전)
 import asyncio, uuid, subprocess
 import csv
+import shutil
+from datetime import datetime
 from pathlib import Path
-from fastapi import FastAPI, UploadFile, Form, Request
+from fastapi import FastAPI, UploadFile, Form, Request, BackgroundTasks
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import pandas as pd
@@ -18,6 +20,7 @@ warnings.filterwarnings(
 
 app = FastAPI()
 BASE = Path("data"); BASE.mkdir(exist_ok=True, parents=True)
+REPORTS_DIR = Path("data/reports"); REPORTS_DIR.mkdir(exist_ok=True, parents=True)
 # Serve static assets (mascot video)
 app.mount("/asset", StaticFiles(directory="asset"), name="asset")
 
@@ -134,7 +137,7 @@ def index():
     <head>
       <meta charset=\"utf-8\" />
       <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
-      <title>학생-과목 섹션 배정기</title>
+      <title>고교학점제 이동반 편성 프로그램</title>
       <script src=\"https://cdn.tailwindcss.com\"></script>
       <style>
         :root {{
@@ -165,7 +168,7 @@ def index():
     <body class=\"bg-sage-50 text-stone-800\">
       <div class=\"mx-auto max-w-5xl p-6\">
         <header class=\"mb-6\">
-          <h1 class=\"text-2xl font-semibold tracking-tight text-stone-900\">학생-과목 섹션 배정기</h1>
+          <h1 class=\"text-2xl font-semibold tracking-tight text-stone-900\">고교학점제 이동반 편성 프로그램</h1>
           <p class=\"text-sm text-stone-500\">OR-Tools 기반 미배정 최소화 모델 · 동시 실행 제한: {MAX_CONCURRENT}</p>
         </header>
 
@@ -173,7 +176,7 @@ def index():
           <div class=\"p-5\">
             <form id=\"run-form\" enctype=\"multipart/form-data\">
               <div class=\"mb-4\">
-                <label class=\"block text-sm font-medium text-stone-700 mb-1\">엑셀 파일 (.xlsx)</label>
+                <label class=\"block text-sm font-medium text-stone-700 mb-1\">고교학점제 신규 수강신청 프로그램의 수강신청-신청결과-템플릿다운로드 양식(.xlsx) 업로드</label>
                 <input class=\"block w-full text-sm file:mr-4 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-sage-100 file:text-sage-800 hover:file:bg-sage-200 border border-stone-300 rounded-lg p-2 bg-white\" type=\"file\" name=\"xlsx\" accept=\".xlsx\" required />
               </div>
 
@@ -224,11 +227,11 @@ def index():
                   <input class=\"w-full rounded-lg border border-stone-300 p-2 focus:outline-none focus:ring-2 focus:ring-sage-300\" type=\"number\" name=\"slots\" min=\"1\" value=\"4\" />
                 </div>
                 <div>
-                  <label class=\"block text-sm text-stone-700 mb-1\">rooms</label>
+                  <label class=\"block text-sm text-stone-700 mb-1\">섹션당 교실수</label>
                   <input class=\"w-full rounded-lg border border-stone-300 p-2 focus:outline-none focus:ring-2 focus:ring-sage-300\" type=\"number\" name=\"rooms\" min=\"1\" value=\"7\" />
                 </div>
                 <div>
-                  <label class=\"block text-sm text-stone-700 mb-1\">extra</label>
+                  <label class=\"block text-sm text-stone-700 mb-1\">섹션당 추가가능교실수</label>
                   <input class=\"w-full rounded-lg border border-stone-300 p-2 focus:outline-none focus:ring-2 focus:ring-sage-300\" type=\"number\" name=\"extra\" min=\"0\" value=\"1\" />
                 </div>
                 <div>
@@ -240,7 +243,7 @@ def index():
                   <input class=\"w-full rounded-lg border border-stone-300 p-2 focus:outline-none focus:ring-2 focus:ring-sage-300\" type=\"number\" name=\"maxcap\" min=\"1\" value=\"30\" />
                 </div>
                 <div>
-                  <label class=\"block text-sm text-stone-700 mb-1\">all extra (total)</label>
+                  <label class=\"block text-sm text-stone-700 mb-1\">전체 섹션에서 추가가능한 교실수</label>
                   <input class=\"w-full rounded-lg border border-stone-300 p-2 focus:outline-none focus:ring-2 focus:ring-sage-300\" type=\"number\" name=\"extra_total\" min=\"0\" placeholder=\"무제한이면 비워두기\" />
                 </div>
               </div>
@@ -298,8 +301,23 @@ def index():
           </div>
         </section>
 
-        <footer class=\"mt-8 text-xs text-stone-400\">
-          <p>입력 파일 예시는 README를 참고하세요. 민감정보(PII)가 포함될 수 있으니 공유에 유의하세요.</p>
+        <footer class=\"mt-8 border-t border-stone-200 pt-6\">
+          <div class=\"text-xs text-stone-500 space-y-3\">
+            <div class=\"flex flex-col md:flex-row md:items-center md:justify-between gap-3\">
+              <div class=\"space-y-1\">
+                <p class=\"font-medium text-stone-700\">고교학점제 이동반 편성 프로그램</p>
+                <p class=\"text-stone-500\">개발: <a href=\"https://namgungyeon.tistory.com/138\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-sage-700 hover:text-sage-800 underline\">남궁연</a> (설악고등학교 교사)</p>
+              </div>
+
+              <div class=\"flex items-center gap-2\">
+                <a href=\"https://creativecommons.org/licenses/by-nc/4.0/\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"CC BY-NC 4.0 License\">
+                  <img src=\"https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg\" alt=\"CC BY-NC 4.0 License\" class=\"h-5\" />
+                </a>
+              </div>
+            </div>
+
+            <p class=\"text-stone-400 text-[10px]\">이 프로그램은 교육 및 연구 목적으로 자유롭게 사용 가능합니다. 상업적 이용은 불가합니다.</p>
+          </div>
         </footer>
       </div>
 
@@ -953,6 +971,7 @@ def index():
                   <a class=\"inline-flex items-center px-3 py-2 rounded-lg bg-sage-600 text-white hover:bg-sage-700\" href=\"${{js.sections}}\" download>sections_plan.csv</a>
                   <a class=\"inline-flex items-center px-3 py-2 rounded-lg bg-sage-600 text-white hover:bg-sage-700\" href=\"${{js.assignments}}\" download>assignments.csv</a>
                   <a class=\"inline-flex items-center px-3 py-2 rounded-lg bg-sage-600 text-white hover:bg-sage-700\" href=\"${{js.report}}\" download>report.txt</a>
+                  <a class=\"inline-flex items-center px-3 py-2 rounded-lg bg-sage-600 text-white hover:bg-sage-700\" href=\"${{js.filled_template}}\" download>배정결과.xlsx ⭐</a>
                   ${{js.constraints ? `<a class=\\\"inline-flex items-center px-3 py-2 rounded-lg bg-sage-600 text-white hover:bg-sage-700\\\" href=\\\"${{js.constraints}}\\\" download>constraints.csv</a>` : ''}}
                 `;
                 if (js.pivot) {{ renderPivot(js.pivot); }} else {{ renderPivot(null); }}
@@ -995,6 +1014,37 @@ def index():
 
 # 아주 간단한 인메모리 상태 저장소 (서버 재시작 시 초기화되는 점만 유의)
 JOBS = {}  # job_id -> {"status": "PENDING|RUNNING|DONE|ERROR", "dir": Path, "error": str|None}
+
+def delete_file_safe(file_path: Path):
+    """파일 안전 삭제"""
+    try:
+        if file_path.exists():
+            file_path.unlink()
+            print(f"[DELETE] Removed file: {file_path}")
+    except Exception as e:
+        print(f"[DELETE] Error removing file {file_path}: {e}")
+
+def delete_job_directory(job_dir: Path):
+    """작업 디렉토리 전체 삭제 (개인정보 보호)"""
+    try:
+        if job_dir.exists():
+            shutil.rmtree(job_dir)
+            print(f"[DELETE] Removed job directory: {job_dir}")
+    except Exception as e:
+        print(f"[DELETE] Error removing directory {job_dir}: {e}")
+
+async def cleanup_job_folder(job_id: str, delay_seconds: int = 3600):
+    """일정 시간 후 작업 폴더 자동 삭제"""
+    await asyncio.sleep(delay_seconds)
+    try:
+        info = JOBS.get(job_id)
+        if info and info.get("dir"):
+            job_dir = info["dir"]
+            if job_dir.exists():
+                shutil.rmtree(job_dir)
+                print(f"[AUTO-CLEANUP] Deleted job directory after {delay_seconds}s: {job_dir}")
+    except Exception as e:
+        print(f"[AUTO-CLEANUP] Error deleting job {job_id}: {e}")
 
 async def run_optimizer(job_id: str, xlsx_path: Path, out_dir: Path,
                         slots: int, rooms: int, extra: int, cap: int, maxcap: int, group: str | None = None,
@@ -1085,6 +1135,19 @@ async def run_optimizer(job_id: str, xlsx_path: Path, out_dir: Path,
                     }
             except Exception:
                 pass
+
+            # 개인정보 보호: report.txt를 별도 보관 + 1시간 후 작업 폴더 자동 삭제
+            try:
+                report_src = out_dir / "report.txt"
+                if report_src.exists():
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    report_dest = REPORTS_DIR / f"{timestamp}_{job_id}.txt"
+                    shutil.copy2(report_src, report_dest)
+                    print(f"[BACKUP] Report saved to: {report_dest}")
+                    # 1시간 후 작업 폴더 자동 삭제 (사용자가 다운로드할 시간 확보)
+                    asyncio.create_task(cleanup_job_folder(job_id, delay_seconds=3600))
+            except Exception as e:
+                print(f"[BACKUP] Error backing up report: {e}")
         else:
             JOBS[job_id]["status"] = "ERROR"
             err = JOBS[job_id].get("_stderr", b"")
@@ -1207,6 +1270,7 @@ def job_status(job_id: str):
                 "sections": f"/download/{job_id}/sections_plan.csv",
                 "assignments": f"/download/{job_id}/assignments.csv",
                 "report": f"/download/{job_id}/report.txt",
+                "filled_template": f"/download/{job_id}/filled_template.xlsx",
             })
             # Expose constraints CSV if present (saved under out/)
             try:
@@ -1225,11 +1289,42 @@ def job_status(job_id: str):
     return resp
 
 @app.get("/download/{job_id}/{name}")
-def download(job_id: str, name: str):
+def download(job_id: str, name: str, background_tasks: BackgroundTasks):
     info = JOBS.get(job_id)
     if not info: return JSONResponse(status_code=404, content={"error":"job not found"})
     path = info["dir"] / "out" / name
-    if not path.exists(): return JSONResponse(status_code=404, content={"error":"file not found"})
+
+    # report.txt는 백업에서도 제공 가능
+    if name == "report.txt" and not path.exists():
+        # 작업 폴더가 삭제된 경우 백업된 report 찾기
+        import glob
+        pattern = str(REPORTS_DIR / f"*_{job_id}.txt")
+        backup_files = glob.glob(pattern)
+        if backup_files:
+            path = Path(backup_files[0])
+            print(f"[INFO] Serving report from backup: {path}")
+        else:
+            return JSONResponse(status_code=404, content={"error":"report file not found"})
+    elif not path.exists():
+        return JSONResponse(status_code=404, content={"error":"file not found"})
+
+    # 개인정보 보호: 다운로드 후 해당 파일만 즉시 삭제
+    # 전체 폴더는 1시간 후 자동 삭제됨
+    if name == "assignments.csv":
+        # 학생 개인정보 포함 파일 - 다운로드 후 즉시 삭제
+        background_tasks.add_task(delete_file_safe, path)
+        background_tasks.add_task(delete_file_safe, info["dir"] / "input.xlsx")
+    elif name == "sections_plan.csv":
+        # 과목별 통계 파일 - 다운로드 후 삭제
+        background_tasks.add_task(delete_file_safe, path)
+    elif name == "filled_template.xlsx":
+        # 배정결과 파일 - 다운로드 후 삭제
+        background_tasks.add_task(delete_file_safe, path)
+    elif name == "report.txt":
+        # report는 이미 백업됨 - 파일만 삭제 (백업된 파일은 유지)
+        if path.parent.name == "out":  # 작업 폴더의 report만 삭제
+            background_tasks.add_task(delete_file_safe, path)
+
     return FileResponse(path)
 
 @app.post("/inspect")
