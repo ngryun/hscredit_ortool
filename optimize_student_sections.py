@@ -359,16 +359,13 @@ def build_and_solve(students: List[Dict],
         use_lexicographic: If True, use two-phase lexicographic optimization (legacy).
                           If False (default), use unified weighted objective (recommended).
     """
-    # Demand order helps with stable post-processing
+    # Preserve original Excel column order from subjects_all
     demand = Counter()
     for s in students:
         for t in s["choices"]:
             demand[t] += 1
-    subjects_sorted = [t for t, _ in demand.most_common()]
-    # Keep subjects with zero demand (rare)
-    for t in subjects_all:
-        if t not in subjects_sorted:
-            subjects_sorted.append(t)
+    # Use subjects_all order directly (preserves Excel column order)
+    subjects_sorted = list(subjects_all)
 
     # Per-subject caps
     subs_caps = load_caps_override(caps_override_csv)
@@ -949,7 +946,10 @@ def build_and_solve(students: List[Dict],
                 })
                 slot_section_count[s] += nn
                 assigned_counts[(t,s)] = total_enrolled
-    sections_plan_df = pd.DataFrame(sp_rows).sort_values(["slot","subject"]).reset_index(drop=True)
+    # Create sections plan DataFrame, sort by slot only (preserve subject order)
+    sections_plan_df = pd.DataFrame(sp_rows)
+    if not sections_plan_df.empty:
+        sections_plan_df = sections_plan_df.sort_values(["slot"]).reset_index(drop=True)
 
     # Assignments (student-level), and post-assign section labels (balanced)
     assign_rows = []

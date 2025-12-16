@@ -39,8 +39,8 @@ def build_pivot(assignments_csv: Path):
         df_all = pd.read_csv(assignments_csv)
         if df_all.empty:
             return None
-        # Subject universe
-        subjects = sorted(df_all["subject"].astype(str).unique().tolist())
+        # Subject universe - preserve order from assignments.csv (first occurrence)
+        subjects = df_all["subject"].astype(str).unique().tolist()
         # Assigned data for section counts
         df_asg = df_all[df_all.get("status") == "assigned"].copy()
         if not df_asg.empty:
@@ -71,9 +71,8 @@ def build_pivot(assignments_csv: Path):
             table[c] = ct_sec.get(c, pd.Series(0, index=ct_sec.index)).reindex(subjects, fill_value=0)
         # Total = demand (assigned + unassigned)
         table["Total"] = demand.reindex(subjects, fill_value=0)
-        # Order columns: Total then sections, and sort subjects by Total desc
+        # Order columns: Total then sections, preserve original subject order
         ordered = ["Total"] + sec_cols_sorted
-        table = table.sort_values("Total", ascending=False)
         # Build JSON-friendly structure
         columns = ["Subject"] + ordered
         rows = []
@@ -1372,7 +1371,7 @@ async def inspect(xlsx: UploadFile):
                 except Exception:
                     cnt = int((col.astype(str).str.strip() == '1').sum())
             subjects.append({"name": c, "count": cnt, "group": ""})
-            subjects.sort(key=lambda x: (-x["count"], x["name"]))
+            # Keep original Excel column order (no sorting)
             return {"groups": [], "semesters": [], "subjects": subjects, "headcount": headcount, "class_count": len(classes)}
 
         # New headered layout (with group/semester headers)
@@ -1438,7 +1437,7 @@ async def inspect(xlsx: UploadFile):
                 cnt = int((col.astype(str).str.strip() == '1').sum())
             group_val = grps[j] if j < len(grps) and grps[j] else ""
             subj_counts.append({"name": sname, "count": cnt, "group": group_val})
-        subj_counts.sort(key=lambda x: (-x["count"], x["name"]))
+        # Keep original Excel column order (no sorting)
 
         # headcount and class_count by student id across A/B/C
         headcount = 0
