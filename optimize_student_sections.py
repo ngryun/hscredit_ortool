@@ -29,7 +29,7 @@ Hard constraints enforced:
 Optional per-subject cap/maxCap via a CSV in config.
 
 Outputs:
-- sections_plan.csv: subject, slot(a|b|c|...), num_sections, total_enrolled
+- sections_plan.csv: subject, slot(A|B|C|...), num_sections, total_enrolled
 - assignments.csv: student_id, name, subject, slot, section_label, status (assigned/unassigned)
 - report.txt: summary stats
 
@@ -56,7 +56,9 @@ warnings.filterwarnings(
 from ortools.sat.python import cp_model
 import sys, json, time
 
-SLOT_LABELS = "abcdefghijklmnopqrstuvwxyz"  # for pretty slot names
+# Slot labels used in outputs (sections_plan.csv / assignments.csv).
+# Keep uppercase as the default for readability; input parsing is case-insensitive.
+SLOT_LABELS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
 @dataclass

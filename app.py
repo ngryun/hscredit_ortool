@@ -5,6 +5,7 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 from fastapi import FastAPI, UploadFile, Form, Request, BackgroundTasks
+from fastapi import Body
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import pandas as pd
@@ -29,8 +30,55 @@ MAX_CONCURRENT = 2
 sema = asyncio.Semaphore(MAX_CONCURRENT)
 from fastapi.responses import HTMLResponse
 
-# Slot label order for pivot sorting
-SLOT_LABELS = "abcdefghijklmnopqrstuvwxyz"
+# Slot label order for pivot sorting (output uses uppercase).
+SLOT_LABELS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+def normalize_student_id(val):
+    """Normalize student id to a consistent string (strip decimals, whitespace)."""
+    try:
+        return str(int(float(val)))
+    except Exception:
+        try:
+            return str(val).strip()
+        except Exception:
+            return ""
+
+def build_unassigned_lookup(df_asg: pd.DataFrame):
+    """Return mapping: subject -> list of {{student_id, name, choices}} for unassigned students."""
+    try:
+        if df_asg is None or df_asg.empty:
+            return {}
+        df = df_asg.copy()
+        df["student_id_norm"] = df.get("student_id", "").apply(normalize_student_id)
+        # Build full choice list per student
+        choices_map = {}
+        for sid, grp in df.groupby("student_id_norm"):
+            choices = []
+            for _, row in grp.iterrows():
+                subj = str(row.get("subject", "")).strip()
+                status = str(row.get("status", "")).strip()
+                slot_val = row.get("slot", "")
+                slot_s = "" if pd.isna(slot_val) else str(slot_val).strip()
+                choices.append({"subject": subj, "status": status, "slot": slot_s})
+            choices_map[sid] = choices
+        # Collect unassigned per subject
+        ua_map = {}
+        df_ua = df[df.get("status") == "unassigned"]
+        for subj, grp in df_ua.groupby("subject"):
+            students = []
+            for _, row in grp.iterrows():
+                sid = row.get("student_id_norm", "")
+                name_val = row.get("name", "")
+                name = "" if pd.isna(name_val) else str(name_val).strip()
+                students.append({
+                    "student_id": sid,
+                    "name": name,
+                    "choices": choices_map.get(sid, []),
+                })
+            ua_map[str(subj)] = students
+        return ua_map
+    except Exception:
+        return {}
 
 def build_pivot(assignments_csv: Path):
     try:
@@ -39,6 +87,14 @@ def build_pivot(assignments_csv: Path):
         df_all = pd.read_csv(assignments_csv)
         if df_all.empty:
             return None
+        # Normalize slot labels for consistent display/sorting (support old lowercase outputs too).
+        if "slot" in df_all.columns:
+            df_all["slot"] = (
+                df_all["slot"]
+                .fillna("")
+                .astype(str)
+                .map(lambda s: s.strip().upper())
+            )
         # Subject universe - preserve order from assignments.csv (first occurrence)
         subjects = df_all["subject"].astype(str).unique().tolist()
         # Assigned data for section counts
@@ -56,7 +112,8 @@ def build_pivot(assignments_csv: Path):
         def sort_key(col: str):
             try:
                 slot, num = col.split("-", 1)
-                si = SLOT_LABELS.index(slot) if slot in SLOT_LABELS else 999
+                slot_norm = str(slot).strip().upper()
+                si = SLOT_LABELS.index(slot_norm) if slot_norm in SLOT_LABELS else 999
                 ni = int(num)
                 return (si, ni)
             except Exception:
@@ -108,6 +165,13 @@ def build_pivot(assignments_csv: Path):
             sp_path = assignments_csv.parent / "sections_plan.csv"
             if sp_path.exists():
                 sp_df = pd.read_csv(sp_path)
+                if "slot" in sp_df.columns:
+                    sp_df["slot"] = (
+                        sp_df["slot"]
+                        .fillna("")
+                        .astype(str)
+                        .map(lambda s: s.strip().upper())
+                    )
                 agg = sp_df.groupby("slot")["num_sections"].sum().to_dict()
                 for sl, cnt in agg.items():
                     slot_meta[str(sl)] = {"sections_open": int(cnt)}
@@ -127,6 +191,161 @@ def build_pivot(assignments_csv: Path):
         return {"columns": columns, "rows": rows, "groups": groups, "row_meta": row_meta, "slot_meta": slot_meta}
     except Exception:
         return None
+
+
+def build_export_xlsx(assignments_csv: Path, output_xlsx: Path, subject_order: list[str] | None = None) -> None:
+    import openpyxl
+    from openpyxl.styles import Alignment, Font
+
+    if not assignments_csv.exists():
+        raise FileNotFoundError(str(assignments_csv))
+
+    df = pd.read_csv(assignments_csv)
+    if df.empty:
+        raise ValueError("assignments.csv is empty")
+
+    # Normalize for stable keys
+    df["student_id_norm"] = df.get("student_id", "").apply(normalize_student_id)
+    df["name_norm"] = df.get("name", "").fillna("").astype(str).map(lambda s: s.strip())
+    df["subject_norm"] = df.get("subject", "").fillna("").astype(str).map(lambda s: s.strip())
+    df["status_norm"] = df.get("status", "").fillna("").astype(str).map(lambda s: s.strip())
+    df["slot_norm"] = df.get("slot", "").fillna("").astype(str).map(lambda s: s.strip().upper())
+    df["section_label_norm"] = df.get("section_label", "").fillna("").astype(str).map(lambda s: s.strip())
+
+    # Student roster (id -> name)
+    roster: dict[str, str] = {}
+    for _, row in df.iterrows():
+        sid = row["student_id_norm"]
+        if not sid:
+            continue
+        name = row["name_norm"]
+        if sid not in roster:
+            roster[sid] = name
+        elif not roster[sid] and name:
+            roster[sid] = name
+
+    # Subject universe
+    subjects_in_data = df["subject_norm"].tolist()
+    # Preserve first-seen order
+    seen = set()
+    subjects_first = []
+    for s in subjects_in_data:
+        if not s or s in seen:
+            continue
+        seen.add(s)
+        subjects_first.append(s)
+
+    ordered: list[str] = []
+    if subject_order:
+        subjects_set = set(subjects_first)
+        for s in subject_order:
+            ss = str(s).strip()
+            if ss and ss in subjects_set and ss not in ordered:
+                ordered.append(ss)
+    for s in subjects_first:
+        if s not in ordered:
+            ordered.append(s)
+
+    # Assignment mapping: (sid, subject) -> (slot, division_no) or None when unassigned.
+    asg_map: dict[tuple[str, str], tuple[str, int | None] | None] = {}
+
+    def _parse_division(label: str) -> int | None:
+        if not label:
+            return None
+        try:
+            tail = label.rsplit("_", 1)[-1]
+            return int(tail)
+        except Exception:
+            return None
+
+    for _, row in df.iterrows():
+        sid = row["student_id_norm"]
+        subj = row["subject_norm"]
+        if not sid or not subj:
+            continue
+        status = row["status_norm"]
+        if status != "assigned":
+            asg_map.setdefault((sid, subj), None)
+            continue
+        slot = row["slot_norm"]
+        div = _parse_division(row["section_label_norm"])
+        if slot:
+            asg_map[(sid, subj)] = (slot, div)
+        else:
+            asg_map[(sid, subj)] = None
+
+    # Sort students by numeric id when possible
+    def sid_sort_key(sid: str):
+        try:
+            return (0, int(sid))
+        except Exception:
+            return (1, sid)
+
+    student_ids = sorted(roster.keys(), key=sid_sort_key)
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "배정결과"
+
+    header_font = Font(bold=True)
+    center = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+    # Two-row header: subject merged across 2 columns
+    ws.cell(row=1, column=1, value="학번").font = header_font
+    ws.cell(row=1, column=2, value="이름").font = header_font
+    ws.merge_cells(start_row=1, start_column=1, end_row=2, end_column=1)
+    ws.merge_cells(start_row=1, start_column=2, end_row=2, end_column=2)
+    ws.cell(row=1, column=1).alignment = center
+    ws.cell(row=1, column=2).alignment = center
+
+    col = 3
+    for subj in ordered:
+        ws.merge_cells(start_row=1, start_column=col, end_row=1, end_column=col + 1)
+        c = ws.cell(row=1, column=col, value=subj)
+        c.font = header_font
+        c.alignment = center
+        c1 = ws.cell(row=2, column=col, value="섹션")
+        c2 = ws.cell(row=2, column=col + 1, value="분반")
+        c1.font = header_font
+        c2.font = header_font
+        c1.alignment = center
+        c2.alignment = center
+        col += 2
+
+    # Freeze headers and id/name columns
+    ws.freeze_panes = "C3"
+
+    # Set widths
+    ws.column_dimensions["A"].width = 12
+    ws.column_dimensions["B"].width = 12
+    for i in range(3, 3 + 2 * len(ordered)):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = 10
+
+    # Body rows
+    r = 3
+    for sid in student_ids:
+        ws.cell(row=r, column=1, value=sid)
+        ws.cell(row=r, column=2, value=roster.get(sid, ""))
+        c = 3
+        for subj in ordered:
+            val = asg_map.get((sid, subj))
+            if val is None:
+                # unassigned or not chosen -> blank cells
+                c += 2
+                continue
+            slot, div = val
+            ws.cell(row=r, column=c, value=slot if slot else "")
+            ws.cell(row=r, column=c + 1, value=div if div and div > 0 else "")
+            c += 2
+        r += 1
+
+    # Align all cells
+    for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
+        for cell in row:
+            if cell.alignment is None or cell.alignment.horizontal is None:
+                cell.alignment = Alignment(vertical="center")
+
+    wb.save(output_xlsx)
 
 @app.get("/", response_class=HTMLResponse)
 def index():
@@ -162,6 +381,10 @@ def index():
         .focus\\:ring-sage-300:focus {{ --tw-ring-color: var(--sage-300); }}
         .file\\:bg-sage-100 {{ background-color: var(--sage-100); }}
         .file\\:text-sage-800 {{ color: var(--sage-700); }}
+
+        /* Pivot drag-and-drop insertion indicator */
+        .drop-line-before td {{ box-shadow: inset 0 3px 0 var(--sage-600); }}
+        .drop-line-after td {{ box-shadow: inset 0 -3px 0 var(--sage-600); }}
       </style>
     </head>
     <body class=\"bg-sage-50 text-stone-800\">
@@ -271,6 +494,26 @@ def index():
               <table id=\"pivot-table\" class=\"min-w-full text-sm\"></table>
             </div>
 
+            <!-- Unassigned Detail Modal -->
+            <div id=\"unassigned-modal\" class=\"fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center\">
+              <div class=\"bg-white rounded-lg p-6 w-[720px] max-w-full mx-4 shadow-lg\">
+                <div class=\"flex justify-between items-center mb-4\">
+                  <div>
+                    <h3 id=\"unassigned-title\" class=\"text-lg font-medium text-stone-900\">미배정 학생</h3>
+                    <p id=\"unassigned-count\" class=\"text-xs text-stone-500\"></p>
+                  </div>
+                  <button id=\"close-unassigned\" class=\"text-stone-400 hover:text-stone-600\">
+                    <svg class=\"w-6 h-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                      <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path>
+                    </svg>
+                  </button>
+                </div>
+                <div id=\"unassigned-content\" class=\"max-h-64 overflow-y-auto border border-stone-200 rounded-lg bg-sage-50 p-3 text-sm text-stone-700\">
+                  <div class=\"text-stone-500\">데이터를 불러오는 중...</div>
+                </div>
+              </div>
+            </div>
+
             <!-- Constraint Settings Modal -->
             <div id=\"constraint-modal\" class=\"fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center\">
               <div class=\"bg-white rounded-lg p-6 w-96 max-w-full mx-4\">
@@ -343,10 +586,17 @@ def index():
         const applySectionRecommendBtn = document.getElementById('apply-section-recommend');
         const releaseAllSectionsBtn = document.getElementById('release-all-sections');
         const capInput = form.querySelector('input[name="cap"]');
+        const unassignedModal = document.getElementById('unassigned-modal');
+        const unassignedTitle = document.getElementById('unassigned-title');
+        const unassignedCount = document.getElementById('unassigned-count');
+        const unassignedContent = document.getElementById('unassigned-content');
+        const closeUnassignedBtn = document.getElementById('close-unassigned');
         let pollTimer = null;
         let pivotData = null;
         let lastInspect = null;
-        let sortAsc = false; // sort by Total (desc by default)
+        let sortAsc = false; // total sort direction (desc by default)
+        let pivotSortMode = 'subject'; // 'subject' | 'total'
+        let subjectSortAsc = true; // subject sort direction (asc by default)
         let runStartMs = null;    // client-side ticking timer
         let tickTimer = null;     // interval handle for elapsed seconds
         let lastProgress = null;  // latest progress payload
@@ -356,6 +606,144 @@ def index():
         const normalizeGroupValue = (val) => (val === undefined || val === null) ? '' : String(val).trim();
         let currentGroupFilter = new Set();
         let subjectCounts = {{}};
+        let currentJobId = null;          // latest job id (may be running)
+        let latestPivotJobId = null;      // job id tied to the pivot currently rendered
+        let rowOrderMode = 'total';       // 'total' | 'manual'
+        let manualSubjectOrder = [];      // subject name array
+        let pivotDnDInitialized = false;
+        let pivotDragSubject = null;
+        let pivotDragSubjectKey = null;
+        let pivotDropPosition = 'before'; // 'before' | 'after'
+        const SUBJECT_ORDER_STORAGE_KEY = 'hscredit_subject_order_v1';
+
+        function loadStoredSubjectOrder() {{
+          try {{
+            const raw = localStorage.getItem(SUBJECT_ORDER_STORAGE_KEY);
+            if (!raw) return [];
+            const arr = JSON.parse(raw);
+            return Array.isArray(arr) ? arr.map((s) => String(s)) : [];
+          }} catch (e) {{
+            return [];
+          }}
+        }}
+
+        function saveStoredSubjectOrder(order) {{
+          try {{
+            const uniq = [];
+            const seen = new Set();
+            (Array.isArray(order) ? order : []).forEach((s) => {{
+              const v = String(s);
+              if (!v || seen.has(v)) return;
+              seen.add(v);
+              uniq.push(v);
+            }});
+            localStorage.setItem(SUBJECT_ORDER_STORAGE_KEY, JSON.stringify(uniq));
+          }} catch (e) {{
+            // ignore
+          }}
+        }}
+
+        function initPivotDnD() {{
+          if (pivotDnDInitialized || !pivotTable) return;
+          pivotDnDInitialized = true;
+
+          const clearDragState = () => {{
+            pivotDragSubject = null;
+            pivotDragSubjectKey = null;
+            pivotTable.querySelectorAll('tr.dragging-row').forEach((el) => {{
+              el.classList.remove('dragging-row', 'opacity-70', 'ring-2', 'ring-sage-500', 'bg-sage-50');
+            }});
+            pivotTable.querySelectorAll('.subject-drag-handle.font-semibold').forEach((el) => {{
+              el.classList.remove('font-semibold', 'text-sage-700');
+            }});
+          }};
+
+          const clearDropHighlights = () => {{
+            pivotTable.querySelectorAll('tr.drop-line-before, tr.drop-line-after').forEach((el) => {{
+              el.classList.remove('drop-line-before', 'drop-line-after');
+            }});
+          }};
+
+          pivotTable.addEventListener('dragstart', (e) => {{
+            const handle = e.target.closest('.subject-drag-handle');
+            if (!handle) return;
+            const key = handle.getAttribute('data-subject-key');
+            if (!key) return;
+            pivotDragSubjectKey = key;
+            try {{
+              pivotDragSubject = decodeURIComponent(key);
+            }} catch (err) {{
+              pivotDragSubject = key;
+            }}
+            rowOrderMode = 'manual';
+            // Visually mark the row being dragged.
+            const row = pivotTable.querySelector(`tr[data-subject-key="${{escapeSelector(key)}}"]`);
+            if (row) {{
+              row.classList.add('dragging-row', 'opacity-70', 'ring-2', 'ring-sage-500', 'bg-sage-50');
+            }}
+            handle.classList.add('font-semibold', 'text-sage-700');
+            if (e.dataTransfer) {{
+              e.dataTransfer.effectAllowed = 'move';
+              e.dataTransfer.setData('text/plain', key);
+            }}
+          }});
+
+          pivotTable.addEventListener('dragover', (e) => {{
+            if (!pivotDragSubject) return;
+            const row = e.target.closest('tr[data-subject-key]');
+            if (!row) return;
+            if (row.classList.contains('dragging-row')) return;
+            e.preventDefault();
+            clearDropHighlights();
+            const rect = row.getBoundingClientRect();
+            const y = e.clientY - rect.top;
+            const before = y < rect.height / 2;
+            pivotDropPosition = before ? 'before' : 'after';
+            row.classList.add(before ? 'drop-line-before' : 'drop-line-after');
+          }});
+
+          pivotTable.addEventListener('drop', (e) => {{
+            if (!pivotDragSubject) return;
+            const row = e.target.closest('tr[data-subject-key]');
+            if (!row) return;
+            e.preventDefault();
+            clearDropHighlights();
+            const dropKey = row.getAttribute('data-subject-key');
+            if (!dropKey) return;
+            let dropSubject = dropKey;
+            try {{
+              dropSubject = decodeURIComponent(dropKey);
+            }} catch (err) {{
+              // keep as-is
+            }}
+            if (!pivotData || !Array.isArray(pivotData.rows)) return;
+            const subjectsNow = pivotData.rows.map((r) => String(r[0]));
+            if (!manualSubjectOrder || !manualSubjectOrder.length) {{
+              manualSubjectOrder = subjectsNow.slice();
+            }}
+            // Ensure manual order contains all current subjects (append missing)
+            const inOrder = new Set(manualSubjectOrder);
+            subjectsNow.forEach((s) => {{
+              if (!inOrder.has(s)) manualSubjectOrder.push(s);
+            }});
+
+            const from = pivotDragSubject;
+            const to = dropSubject;
+            if (!from || !to || from === to) return;
+            manualSubjectOrder = manualSubjectOrder.filter((s) => s !== from);
+            const toIndex = manualSubjectOrder.indexOf(to);
+            const baseIndex = Math.max(0, toIndex);
+            const insertAt = pivotDropPosition === 'after' ? baseIndex + 1 : baseIndex;
+            manualSubjectOrder.splice(insertAt, 0, from);
+            saveStoredSubjectOrder(manualSubjectOrder);
+            drawPivot();
+          }});
+
+          pivotTable.addEventListener('dragend', () => {{
+            clearDropHighlights();
+            clearDragState();
+          }});
+        }}
 
         function applyGroupFilter(values) {{
           const normalized = new Set((Array.isArray(values) ? values : []).map((v) => normalizeGroupValue(v)).filter(Boolean));
@@ -400,6 +788,118 @@ def index():
           return String(str).replace(/"/g, '\\"');
         }}
 
+        function closeUnassignedModal() {{
+          if (unassignedModal) {{
+            unassignedModal.classList.add('hidden');
+          }}
+        }}
+
+        async function openUnassignedModal(subjectName) {{
+          if (!unassignedModal || !subjectName) return;
+          const jobId = latestPivotJobId || currentJobId;
+          const safeName = String(subjectName);
+          const targetSubjectKey = safeName.trim();
+          if (unassignedTitle) unassignedTitle.textContent = `${{safeName}} - 미배정 학생`;
+          if (unassignedCount) unassignedCount.textContent = '';
+          if (unassignedContent) unassignedContent.innerHTML = '<div class=\"text-stone-500\">데이터를 불러오는 중...</div>';
+          unassignedModal.classList.remove('hidden');
+          if (!jobId) {{
+            if (unassignedContent) unassignedContent.innerHTML = '<div class=\"text-stone-500\">최근 실행 기록이 없습니다.</div>';
+            return;
+          }}
+          try {{
+            const res = await fetch(`/jobs/${{jobId}}/unassigned/${{encodeURIComponent(safeName)}}`);
+            if (!res.ok) throw new Error('조회 실패');
+            const js = await res.json();
+            const list = Array.isArray(js.students) ? js.students : [];
+            if (unassignedCount) {{
+              unassignedCount.textContent = list.length ? `미배정 ${{list.length}}명` : '미배정 없음';
+            }}
+            if (!unassignedContent) return;
+            if (!list.length) {{
+              unassignedContent.innerHTML = '<div class=\"text-stone-500\">미배정 학생이 없습니다.</div>';
+              return;
+            }}
+            const rows = list.map((st, idx) => {{
+              const sid = escapeHtml(st.student_id ?? st.id ?? '');
+              const nm = escapeHtml(st.name ?? '');
+              const choices = Array.isArray(st.choices) ? st.choices : [];
+              const choiceBadges = choices.map((ch) => {{
+                const rawSubj = (ch?.subject ?? '').toString();
+                const subj = escapeHtml(rawSubj);
+                const status = (ch?.status ?? '').toString();
+                const slot = (ch?.slot ?? '').toString().trim();
+                const badgeText = status === 'assigned' ? (slot || '배정') : '미배정';
+                const badgeClass = status === 'assigned' ? 'bg-sage-100 text-sage-700' : 'bg-rose-100 text-rose-700';
+                const highlight = rawSubj.trim() === targetSubjectKey ? 'font-semibold text-stone-900' : 'text-stone-700';
+                return `<span class=\"inline-flex items-center gap-1 px-2 py-1 rounded-full border border-stone-200 bg-white text-xs\">
+                  <span class=\"${{highlight}}\">${{subj}}</span>
+                  <span class=\"px-1 rounded ${{badgeClass}}\">${{escapeHtml(badgeText)}}</span>
+                </span>`;
+              }}).join(' ');
+              const choicesCell = choiceBadges || '<span class=\"text-stone-500\">-</span>';
+              return `<tr class=\"odd:bg-white even:bg-sage-50\">
+                <td class=\"px-2 py-1 text-right text-stone-500\">${{idx + 1}}</td>
+                <td class=\"px-2 py-1 font-mono text-sm text-stone-800\">${{sid}}</td>
+                <td class=\"px-2 py-1 text-sm text-stone-800\">${{nm || '-'}}</td>
+                <td class=\"px-2 py-1 text-sm text-stone-800\"><div class=\"flex flex-wrap gap-1\">${{choicesCell}}</div></td>
+              </tr>`;
+            }}).join('');
+            unassignedContent.innerHTML = `
+              <div class=\"overflow-x-auto\">
+                <table class=\"min-w-full text-xs\">
+                  <thead class=\"bg-sage-100 text-stone-700\">
+                    <tr>
+                      <th class=\"px-2 py-1 text-right w-10\">#</th>
+                      <th class=\"px-2 py-1 text-left\">학번</th>
+                      <th class=\"px-2 py-1 text-left\">이름</th>
+                      <th class=\"px-2 py-1 text-left\">선택 과목 (배정)</th>
+                    </tr>
+                  </thead>
+                  <tbody>${{rows}}</tbody>
+                </table>
+              </div>`;
+          }} catch (err) {{
+            if (unassignedContent) {{
+              unassignedContent.innerHTML = '<div class=\"text-rose-600 text-sm\">불러오는 중 오류가 발생했습니다.</div>';
+            }}
+          }}
+        }}
+
+        async function downloadExportXlsx(jobId) {{
+          if (!jobId) throw new Error('작업 ID가 없습니다.');
+          // Use the currently rendered pivot row order (manual/total) as the export column order.
+          const order = Array.from(pivotTable?.querySelectorAll('tbody tr[data-subject-key]') || [])
+            .map((tr) => {{
+              const key = tr.getAttribute('data-subject-key') || '';
+              try {{ return decodeURIComponent(key); }} catch (e) {{ return key; }}
+            }})
+            .filter((s) => s && s.trim());
+
+          const res = await fetch(`/jobs/${{jobId}}/export`, {{
+            method: 'POST',
+            headers: {{ 'Content-Type': 'application/json' }},
+            body: JSON.stringify({{ subject_order: order }}),
+          }});
+          if (!res.ok) {{
+            let msg = '내보내기 실패';
+            try {{
+              const js = await res.json();
+              msg = js.error || msg;
+            }} catch (e) {{}}
+            throw new Error(msg);
+          }}
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = '배정결과.xlsx';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }}
+
         function recommendedSections(count) {{
           const capVal = Math.max(1, parseInt(capInput?.value || '28', 10) || 28);
           const demand = Number(count || 0);
@@ -412,19 +912,80 @@ def index():
           downloads.classList.add('hidden');
         }}
 
+        function slotPastelClassFromCol(colName) {{
+          // colName example: "A-1", "B-3" (pivotData.columns entries after Total)
+          try {{
+            const slot = String(colName || '').split('-', 1)[0].trim().toUpperCase();
+            switch (slot) {{
+              case 'A': return 'bg-amber-50';
+              case 'B': return 'bg-sky-50';
+              case 'C': return 'bg-rose-50';
+              case 'D': return 'bg-emerald-50';
+              case 'E': return 'bg-violet-50';
+              case 'F': return 'bg-lime-50';
+              default: return 'bg-sage-50';
+            }}
+          }} catch (e) {{
+            return 'bg-sage-50';
+          }}
+        }}
+
         function drawPivot() {{
           const cols = pivotData.columns;
-          const rows = pivotData.rows.slice().sort((a,b) => {{
-            const va = Number(a[1]||0);
-            const vb = Number(b[1]||0);
-            return sortAsc ? (va - vb) : (vb - va);
-          }});
+          const rawRows = pivotData.rows.slice();
+          let rows = [];
+          if (rowOrderMode === 'manual') {{
+            if (!manualSubjectOrder || !manualSubjectOrder.length) {{
+              manualSubjectOrder = loadStoredSubjectOrder();
+            }}
+            const rowBySubject = new Map(rawRows.map((r) => [String(r[0]), r]));
+            const subjectsNow = rawRows.map((r) => String(r[0]));
+            const subjectsSet = new Set(subjectsNow);
+            const order = [];
+            const seen = new Set();
+            (Array.isArray(manualSubjectOrder) ? manualSubjectOrder : []).forEach((s) => {{
+              const subj = String(s);
+              if (!subj || seen.has(subj) || !subjectsSet.has(subj)) return;
+              seen.add(subj);
+              order.push(subj);
+            }});
+            subjectsNow.forEach((subj) => {{
+              if (!seen.has(subj)) {{
+                seen.add(subj);
+                order.push(subj);
+              }}
+            }});
+            manualSubjectOrder = order.slice();
+            saveStoredSubjectOrder(manualSubjectOrder);
+            rows = order.map((subj) => rowBySubject.get(subj)).filter(Boolean);
+          }} else {{
+            if (pivotSortMode === 'total') {{
+              rows = rawRows.sort((a, b) => {{
+                const va = Number(a[1] || 0);
+                const vb = Number(b[1] || 0);
+                return sortAsc ? (va - vb) : (vb - va);
+              }});
+            }} else {{
+              const normSubj = (s) => String(s ?? '').trim().replace(/\\s+/g, ' ');
+              rows = rawRows.sort((a, b) => {{
+                const cmp = normSubj(a[0]).localeCompare(normSubj(b[0]), 'ko', {{ numeric: true, sensitivity: 'base' }});
+                return subjectSortAsc ? cmp : -cmp;
+              }});
+            }}
+          }}
           // Build grouped headers
           const groups = pivotData.groups || [];
           const slotMeta = pivotData.slot_meta || {{}};
+          const totalHeaderSuffix = rowOrderMode === 'manual' ? ' · 수동정렬' : '';
+          const totalSortIndicator = (rowOrderMode === 'manual' || pivotSortMode !== 'total')
+            ? ''
+            : (' ' + (sortAsc ? '▲' : '▼'));
+          const subjectSortIndicator = (rowOrderMode === 'manual' || pivotSortMode !== 'subject')
+            ? ''
+            : (' ' + (subjectSortAsc ? '▲' : '▼'));
           let hTop = '<tr>' +
-            '<th class="px-3 py-2 text-left text-stone-700 border-b border-stone-200" rowspan="2">Subject</th>' +
-            '<th id="th-total" class="px-3 py-2 text-right text-stone-700 border-b border-stone-200 cursor-pointer select-none" rowspan="2">총인원(미배정) ' + (sortAsc ? '▲' : '▼') + '</th>';
+            '<th id="th-subject" class="px-3 py-2 text-left text-stone-700 border-b border-stone-200 cursor-pointer select-none" rowspan="2">Subject' + subjectSortIndicator + '</th>' +
+            '<th id="th-total" class="px-3 py-2 text-right text-stone-700 border-b border-stone-200 cursor-pointer select-none" rowspan="2">총인원(미배정)' + totalSortIndicator + totalHeaderSuffix + '</th>';
           for (const g of groups) {{
             const meta = slotMeta[g.slot] || {{}};
             const opened = Number(meta.sections_open || 0).toLocaleString();
@@ -443,8 +1004,10 @@ def index():
           hSub += '</tr>';
           const trs = rows.map(r => {{
             const subject = String(r[0]);
+            const subjectKey = encodeURIComponent(subject);
             const total = Number(r[1] || 0);
             const ua = (pivotData.row_meta && pivotData.row_meta[subject]) ? Number(pivotData.row_meta[subject].unassigned || 0) : 0;
+            const safeSubject = escapeHtml(subject);
             let cells = '';
             // Subject with gear icon
             const hasConstraints = subjectConstraints[subject] && subjectConstraints[subject].maxPerSlot;
@@ -452,9 +1015,10 @@ def index():
               '<span class="inline-block w-2 h-2 bg-sage-500 rounded-full ml-1" title="제약 조건 설정됨"></span>' : '';
             cells += `<td class="px-3 py-1 text-left border-b border-stone-100">
               <div class="flex items-center gap-2">
-                <span>${{subject}}</span>
+                <span class="subject-drag-handle text-stone-400 hover:text-stone-600 select-none cursor-move" draggable="true" data-subject-key="${{subjectKey}}" title="드래그하여 과목 순서 변경">⋮⋮</span>
+                <span>${{safeSubject}}</span>
                 ${{constraintIndicator}}
-                <button data-subject="${{subject}}" class="constraint-btn text-stone-400 hover:text-stone-600" title="제약 조건 설정">
+                <button data-subject="${{safeSubject}}" class="constraint-btn text-stone-400 hover:text-stone-600" title="제약 조건 설정">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -463,24 +1027,45 @@ def index():
               </div>
             </td>`;
             // Total (Unassigned)
-            cells += `<td class=\"px-3 py-1 text-right border-b border-stone-100\">${{total.toLocaleString()}} (${{ua.toLocaleString()}})</td>`;
+            const uaBadge = ua > 0
+              ? `<button type="button" class="unassigned-btn text-rose-600 underline decoration-dotted hover:text-rose-700 focus:outline-none cursor-pointer" data-subject="${{safeSubject}}" title="미배정 학번 보기">${{ua.toLocaleString()}}</button>`
+              : `<span class="text-stone-500">${{ua.toLocaleString()}}</span>`;
+            cells += `<td class=\"px-3 py-1 text-right border-b border-stone-100\">${{total.toLocaleString()}} (${{uaBadge}})</td>`;
             // Section counts start at index 2
             for (let i = 2; i < r.length; i++) {{
               const v = Number(r[i] || 0);
-              cells += `<td class=\"px-3 py-1 text-right border-b border-stone-100\">${{v.toLocaleString()}}</td>`;
+              const colName = cols[i];
+              const pastel = v > 0 ? slotPastelClassFromCol(colName) : '';
+              cells += `<td class=\"px-3 py-1 text-right border-b border-stone-100 ${{pastel}}\">${{v.toLocaleString()}}</td>`;
             }}
-            return `<tr class=\"odd:bg-white even:bg-sage-50\">${{cells}}</tr>`;
+            return `<tr class=\"odd:bg-white even:bg-sage-50\" data-subject-key=\"${{subjectKey}}\">${{cells}}</tr>`;
           }}).join('');
           pivotTable.innerHTML = `
             <thead class=\"bg-sage-100 sticky top-0\">${{hTop}}${{hSub}}</thead>
             <tbody>${{trs}}</tbody>
           `;
           pivotWrap.classList.remove('hidden');
+          initPivotDnD();
           // Attach sorter
+          const thSubject = document.getElementById('th-subject');
+          if (thSubject) {{
+            thSubject.onclick = () => {{
+              rowOrderMode = 'total';
+              pivotSortMode = 'subject';
+              subjectSortAsc = !subjectSortAsc;
+              drawPivot();
+            }};
+            thSubject.title = '과목명 정렬 토글 (클릭 시 수동정렬 해제)';
+          }}
           const thTotal = document.getElementById('th-total');
           if (thTotal) {{
-            thTotal.onclick = () => {{ sortAsc = !sortAsc; drawPivot(); }};
-            thTotal.title = '총인원 정렬 토글';
+            thTotal.onclick = () => {{
+              rowOrderMode = 'total';
+              pivotSortMode = 'total';
+              sortAsc = !sortAsc;
+              drawPivot();
+            }};
+            thTotal.title = '총인원 정렬 (클릭 시 수동정렬 해제)';
           }}
         }}
 
@@ -491,6 +1076,9 @@ def index():
             pivotTable.innerHTML = '';
             return;
           }}
+          // Load saved manual order for later drag/reorder, but keep default view sorting by subject.
+          const stored = loadStoredSubjectOrder();
+          if (stored && stored.length) manualSubjectOrder = stored.slice();
           drawPivot();
         }}
 
@@ -689,7 +1277,7 @@ def index():
             try {{
               const subs = Array.isArray(info?.subjects) ? info.subjects : [];
               const slots = Number(form.querySelector('input[name="slots"]').value || 4);
-              const labels = 'abcdefghijklmnopqrstuvwxyz'.slice(0, Math.max(0, slots)).split('');
+              const labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.slice(0, Math.max(0, slots)).split('');
               if (subs.length) {{
                 let thead = '<tr>' +
                   '<th class="px-3 py-2 text-left text-stone-700 border-b border-stone-200">Subject</th>' +
@@ -844,21 +1432,60 @@ def index():
         closeModalBtn.addEventListener('click', closeConstraintModal);
         saveConstraintsBtn.addEventListener('click', saveConstraints);
         clearConstraintsBtn.addEventListener('click', clearConstraints);
+        if (closeUnassignedBtn) closeUnassignedBtn.addEventListener('click', closeUnassignedModal);
 
         // Close modal when clicking outside
         constraintModal.addEventListener('click', (e) => {{
           if (e.target === constraintModal) closeConstraintModal();
         }});
+        if (unassignedModal) {{
+          unassignedModal.addEventListener('click', (e) => {{
+            if (e.target === unassignedModal) closeUnassignedModal();
+          }});
+        }}
 
         // Close modal on Escape key
         document.addEventListener('keydown', (e) => {{
-          if (e.key === 'Escape' && !constraintModal.classList.contains('hidden')) {{
-            closeConstraintModal();
+          if (e.key === 'Escape') {{
+            if (constraintModal && !constraintModal.classList.contains('hidden')) {{
+              closeConstraintModal();
+            }}
+            if (unassignedModal && !unassignedModal.classList.contains('hidden')) {{
+              closeUnassignedModal();
+            }}
           }}
         }});
 
         // Add event delegation for constraint buttons
         document.addEventListener('click', (e) => {{
+          if (e.target.closest('.export-btn')) {{
+            const btn = e.target.closest('.export-btn');
+            const jobId = btn.getAttribute('data-job') || (latestPivotJobId || currentJobId);
+            btn.disabled = true;
+            btn.classList.add('opacity-60', 'cursor-not-allowed');
+            const prev = statusNote.textContent;
+            statusNote.textContent = '배정결과.xlsx 생성 중...';
+            downloadExportXlsx(jobId)
+              .catch((err) => {{
+                console.warn('export error', err);
+                errBox.textContent = String(err);
+                errBox.classList.remove('hidden');
+              }})
+              .finally(() => {{
+                btn.disabled = false;
+                btn.classList.remove('opacity-60', 'cursor-not-allowed');
+                statusNote.textContent = prev;
+              }});
+            return;
+          }}
+          if (e.target.closest('.unassigned-btn')) {{
+            const btn = e.target.closest('.unassigned-btn');
+            const subject = btn.getAttribute('data-subject');
+            if (subject) {{
+              openUnassignedModal(subject);
+            }}
+            return;
+          }}
           if (e.target.closest('.constraint-btn')) {{
             const btn = e.target.closest('.constraint-btn');
             const subject = btn.getAttribute('data-subject');
@@ -920,6 +1547,7 @@ def index():
             console.log('[DEBUG] Received response:', res.status, res.statusText);
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || '실행 실패');
+            currentJobId = data.job;
             jobInfo.classList.remove('hidden');
             jobInfo.textContent = `작업 ID: ${{data.job}}`;
             statusNote.textContent = '대기열에 추가되었습니다. 처리 중...';
@@ -970,9 +1598,10 @@ def index():
                   <a class=\"inline-flex items-center px-3 py-2 rounded-lg bg-sage-600 text-white hover:bg-sage-700\" href=\"${{js.sections}}\" download>sections_plan.csv</a>
                   <a class=\"inline-flex items-center px-3 py-2 rounded-lg bg-sage-600 text-white hover:bg-sage-700\" href=\"${{js.assignments}}\" download>assignments.csv</a>
                   <a class=\"inline-flex items-center px-3 py-2 rounded-lg bg-sage-600 text-white hover:bg-sage-700\" href=\"${{js.report}}\" download>report.txt</a>
-                  <a class=\"inline-flex items-center px-3 py-2 rounded-lg bg-sage-600 text-white hover:bg-sage-700\" href=\"${{js.filled_template}}\" download>배정결과.xlsx ⭐</a>
+                  <button type=\"button\" class=\"export-btn inline-flex items-center px-3 py-2 rounded-lg bg-sage-600 text-white hover:bg-sage-700\" data-job=\"${{data.job}}\">배정결과.xlsx ⭐</button>
                   ${{js.constraints ? `<a class=\\\"inline-flex items-center px-3 py-2 rounded-lg bg-sage-600 text-white hover:bg-sage-700\\\" href=\\\"${{js.constraints}}\\\" download>constraints.csv</a>` : ''}}
                 `;
+                latestPivotJobId = data.job;
                 if (js.pivot) {{ renderPivot(js.pivot); }} else {{ renderPivot(null); }}
                 submitBtn.disabled = false;
                }} else if (js.status === 'ERROR') {{
@@ -1132,6 +1761,13 @@ async def run_optimizer(job_id: str, xlsx_path: Path, out_dir: Path,
                         "students_with_unassigned": students_with_unassigned,
                         "total_assigned": total_assigned,
                     }
+                    # Cache unassigned student list by subject for quick UI lookup (even after file deletion)
+                    try:
+                        ua_map = build_unassigned_lookup(df_asg)
+                        if ua_map:
+                            JOBS[job_id]["unassigned"] = ua_map
+                    except Exception:
+                        pass
             except Exception:
                 pass
 
@@ -1286,6 +1922,72 @@ def job_status(job_id: str):
     if info["status"] == "ERROR":
         resp["error"] = info["error"]
     return resp
+
+@app.get("/jobs/{job_id}/unassigned/{subject}")
+def job_unassigned(job_id: str, subject: str):
+    """Return unassigned students (id + optional name) for a given subject in a finished job."""
+    info = JOBS.get(job_id)
+    if not info:
+        return JSONResponse(status_code=404, content={"error": "job not found"})
+    if info.get("status") != "DONE":
+        return JSONResponse(status_code=400, content={"error": "job not completed"})
+
+    ua_map = info.get("unassigned") or {}
+    if ua_map:
+        students = ua_map.get(subject, [])
+        return {"subject": subject, "count": len(students), "students": students}
+
+    # Fallback: if the file still exists, compute on demand
+    try:
+        job_dir = info.get("dir")
+        if job_dir:
+            assignments_path = Path(job_dir) / "out" / "assignments.csv"
+            if assignments_path.exists():
+                df = pd.read_csv(assignments_path)
+                ua_map = build_unassigned_lookup(df)
+                students = ua_map.get(subject, [])
+                return {"subject": subject, "count": len(students), "students": students}
+    except Exception:
+        pass
+
+    return {"subject": subject, "count": 0, "students": []}
+
+
+@app.post("/jobs/{job_id}/export")
+def job_export(job_id: str, background_tasks: BackgroundTasks, payload: dict = Body(default_factory=dict)):
+    """Create a fresh export xlsx (new file, not modifying the input template)."""
+    info = JOBS.get(job_id)
+    if not info:
+        return JSONResponse(status_code=404, content={"error": "job not found"})
+    if info.get("status") != "DONE":
+        return JSONResponse(status_code=400, content={"error": "job not completed"})
+
+    subject_order = None
+    try:
+        raw = payload.get("subject_order")
+        if isinstance(raw, list):
+            subject_order = [str(x) for x in raw if str(x).strip()]
+    except Exception:
+        subject_order = None
+
+    out_dir = info["dir"] / "out"
+    assignments_path = out_dir / "assignments.csv"
+    if not assignments_path.exists():
+        return JSONResponse(status_code=404, content={"error": "assignments.csv not found (이미 다운로드되어 삭제되었을 수 있습니다)."})
+
+    export_path = out_dir / "export.xlsx"
+    try:
+        build_export_xlsx(assignments_path, export_path, subject_order=subject_order)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": f"export build failed: {e}"})
+
+    background_tasks.add_task(delete_file_safe, export_path)
+
+    return FileResponse(
+        export_path,
+        filename="배정결과.xlsx",
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
 
 @app.get("/download/{job_id}/{name}")
 def download(job_id: str, name: str, background_tasks: BackgroundTasks):
