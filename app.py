@@ -1,4 +1,4 @@
-# app.py  (Redis 없이 동시 실행 제한 버전)
+# app.py  (Cloud Run 배포 버전)
 import asyncio, uuid, subprocess
 import csv
 import shutil
@@ -25,9 +25,6 @@ REPORTS_DIR = Path("data/reports"); REPORTS_DIR.mkdir(exist_ok=True, parents=Tru
 # Serve static assets (mascot video)
 app.mount("/asset", StaticFiles(directory="asset"), name="asset")
 
-# ← 여기 숫자만 조절하면 동시 실행 개수 제한 가능 (예: 2~3)
-MAX_CONCURRENT = 2
-sema = asyncio.Semaphore(MAX_CONCURRENT)
 from fastapi.responses import HTMLResponse
 
 # Slot label order for pivot sorting (output uses uppercase).
@@ -391,7 +388,7 @@ def index():
       <div class=\"mx-auto max-w-5xl p-6\">
         <header class=\"mb-6\">
           <h1 class=\"text-2xl font-semibold tracking-tight text-stone-900\">고교학점제 이동반 편성 프로그램</h1>
-          <p class=\"text-sm text-stone-500\">OR-Tools 기반 미배정 최소화 모델 · 동시 실행 제한: {MAX_CONCURRENT}</p>
+          <p class=\"text-sm text-stone-500\">OR-Tools 기반 미배정 최소화 모델</p>
         </header>
 
         <section class=\"bg-white border border-stone-200 rounded-xl shadow-sm\">
@@ -1678,115 +1675,114 @@ async def run_optimizer(job_id: str, xlsx_path: Path, out_dir: Path,
                         slots: int, rooms: int, extra: int, cap: int, maxcap: int, group: str | None = None,
                         extra_total: int | None = None, constraints_csv_path: Path | None = None,
                         fixed_sections_csv_path: Path | None = None):
-    async with sema:  # 동시 실행 개수 제한
-        JOBS[job_id]["status"] = "RUNNING"
-        cmd = [
-            "python", "optimize_student_sections.py",
-            "--input", str(xlsx_path),
-            "--output-dir", str(out_dir),
-            "--slots", str(slots),
-            "--rooms-per-slot", str(rooms),
-            "--extra-rooms-per-slot", str(extra),
-            "--cap", str(cap),
-            "--maxcap", str(maxcap),
-            "--time-limit", "240",
-            "--workers", "8"  # 머신 코어/워커 수에 맞춰 조정
-        ]
-        if group:
-            cmd += ["--group", str(group)]
-        if extra_total is not None:
-            cmd += ["--extra-total", str(extra_total)]
-        if constraints_csv_path and constraints_csv_path.exists():
-            cmd += ["--constraints-csv", str(constraints_csv_path)]
-        if fixed_sections_csv_path and fixed_sections_csv_path.exists():
-            cmd += ["--fixed-sections-csv", str(fixed_sections_csv_path)]
-        # Debug: show launch command and whether constraints CSV attached
+    JOBS[job_id]["status"] = "RUNNING"
+    cmd = [
+        "python", "optimize_student_sections.py",
+        "--input", str(xlsx_path),
+        "--output-dir", str(out_dir),
+        "--slots", str(slots),
+        "--rooms-per-slot", str(rooms),
+        "--extra-rooms-per-slot", str(extra),
+        "--cap", str(cap),
+        "--maxcap", str(maxcap),
+        "--time-limit", "240",
+        "--workers", "8"  # 머신 코어/워커 수에 맞춰 조정
+    ]
+    if group:
+        cmd += ["--group", str(group)]
+    if extra_total is not None:
+        cmd += ["--extra-total", str(extra_total)]
+    if constraints_csv_path and constraints_csv_path.exists():
+        cmd += ["--constraints-csv", str(constraints_csv_path)]
+    if fixed_sections_csv_path and fixed_sections_csv_path.exists():
+        cmd += ["--fixed-sections-csv", str(fixed_sections_csv_path)]
+    # Debug: show launch command and whether constraints CSV attached
+    try:
+        print("[DEBUG] Launching optimizer:", " ".join(cmd))
+        if constraints_csv_path:
+            print(f"[DEBUG] constraints_csv_path: {constraints_csv_path} exists={constraints_csv_path.exists()}")
+        if fixed_sections_csv_path:
+            print(f"[DEBUG] fixed_sections_csv_path: {fixed_sections_csv_path} exists={fixed_sections_csv_path.exists()}")
+    except Exception:
+        pass
+    # 비동기 실행
+    proc = await asyncio.create_subprocess_exec(
+        *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+    )
+    # Stream stdout to capture progress
+    async def read_stdout():
         try:
-            print("[DEBUG] Launching optimizer:", " ".join(cmd))
-            if constraints_csv_path:
-                print(f"[DEBUG] constraints_csv_path: {constraints_csv_path} exists={constraints_csv_path.exists()}")
-            if fixed_sections_csv_path:
-                print(f"[DEBUG] fixed_sections_csv_path: {fixed_sections_csv_path} exists={fixed_sections_csv_path.exists()}")
-        except Exception:
-            pass
-        # 비동기 실행
-        proc = await asyncio.create_subprocess_exec(
-            *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-        )
-        # Stream stdout to capture progress
-        async def read_stdout():
-            try:
-                while True:
-                    line = await proc.stdout.readline()
-                    if not line:
-                        break
-                    txt = line.decode(errors="ignore").strip()
-                    if txt.startswith("[PROGRESS]"):
-                        import json as _json
-                        try:
-                            js = _json.loads(txt[len("[PROGRESS]"):].strip())
-                            JOBS[job_id]["progress"] = js
-                        except Exception:
-                            pass
-            except Exception:
-                pass
-
-        async def read_stderr():
-            try:
-                JOBS[job_id]["_stderr"] = b""
-                while True:
-                    line = await proc.stderr.readline()
-                    if not line:
-                        break
-                    JOBS[job_id]["_stderr"] += line
-            except Exception:
-                pass
-
-        await asyncio.gather(read_stdout(), read_stderr())
-        await proc.wait()
-        if proc.returncode == 0:
-            JOBS[job_id]["status"] = "DONE"
-            # Build pivot for quick UI preview
-            assignments_csv = out_dir / "assignments.csv"
-            JOBS[job_id]["pivot"] = build_pivot(assignments_csv)
-            # Compute simple summary metrics
-            try:
-                if assignments_csv.exists():
-                    df_asg = pd.read_csv(assignments_csv)
-                    total_unassigned = int((df_asg.get("status") == "unassigned").sum())
-                    students_with_unassigned = int(df_asg[df_asg.get("status") == "unassigned"]["student_id"].nunique())
-                    total_assigned = int((df_asg.get("status") == "assigned").sum())
-                    JOBS[job_id]["summary"] = {
-                        "total_unassigned": total_unassigned,
-                        "students_with_unassigned": students_with_unassigned,
-                        "total_assigned": total_assigned,
-                    }
-                    # Cache unassigned student list by subject for quick UI lookup (even after file deletion)
+            while True:
+                line = await proc.stdout.readline()
+                if not line:
+                    break
+                txt = line.decode(errors="ignore").strip()
+                if txt.startswith("[PROGRESS]"):
+                    import json as _json
                     try:
-                        ua_map = build_unassigned_lookup(df_asg)
-                        if ua_map:
-                            JOBS[job_id]["unassigned"] = ua_map
+                        js = _json.loads(txt[len("[PROGRESS]"):].strip())
+                        JOBS[job_id]["progress"] = js
                     except Exception:
                         pass
-            except Exception:
-                pass
+        except Exception:
+            pass
 
-            # 개인정보 보호: report.txt를 별도 보관 + 1시간 후 작업 폴더 자동 삭제
-            try:
-                report_src = out_dir / "report.txt"
-                if report_src.exists():
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    report_dest = REPORTS_DIR / f"{timestamp}_{job_id}.txt"
-                    shutil.copy2(report_src, report_dest)
-                    print(f"[BACKUP] Report saved to: {report_dest}")
-                    # 1시간 후 작업 폴더 자동 삭제 (사용자가 다운로드할 시간 확보)
-                    asyncio.create_task(cleanup_job_folder(job_id, delay_seconds=3600))
-            except Exception as e:
-                print(f"[BACKUP] Error backing up report: {e}")
-        else:
-            JOBS[job_id]["status"] = "ERROR"
-            err = JOBS[job_id].get("_stderr", b"")
-            JOBS[job_id]["error"] = (err or b"").decode(errors="ignore")
+    async def read_stderr():
+        try:
+            JOBS[job_id]["_stderr"] = b""
+            while True:
+                line = await proc.stderr.readline()
+                if not line:
+                    break
+                JOBS[job_id]["_stderr"] += line
+        except Exception:
+            pass
+
+    await asyncio.gather(read_stdout(), read_stderr())
+    await proc.wait()
+    if proc.returncode == 0:
+        JOBS[job_id]["status"] = "DONE"
+        # Build pivot for quick UI preview
+        assignments_csv = out_dir / "assignments.csv"
+        JOBS[job_id]["pivot"] = build_pivot(assignments_csv)
+        # Compute simple summary metrics
+        try:
+            if assignments_csv.exists():
+                df_asg = pd.read_csv(assignments_csv)
+                total_unassigned = int((df_asg.get("status") == "unassigned").sum())
+                students_with_unassigned = int(df_asg[df_asg.get("status") == "unassigned"]["student_id"].nunique())
+                total_assigned = int((df_asg.get("status") == "assigned").sum())
+                JOBS[job_id]["summary"] = {
+                    "total_unassigned": total_unassigned,
+                    "students_with_unassigned": students_with_unassigned,
+                    "total_assigned": total_assigned,
+                }
+                # Cache unassigned student list by subject for quick UI lookup (even after file deletion)
+                try:
+                    ua_map = build_unassigned_lookup(df_asg)
+                    if ua_map:
+                        JOBS[job_id]["unassigned"] = ua_map
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        # 개인정보 보호: report.txt를 별도 보관 + 1시간 후 작업 폴더 자동 삭제
+        try:
+            report_src = out_dir / "report.txt"
+            if report_src.exists():
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                report_dest = REPORTS_DIR / f"{timestamp}_{job_id}.txt"
+                shutil.copy2(report_src, report_dest)
+                print(f"[BACKUP] Report saved to: {report_dest}")
+                # 1시간 후 작업 폴더 자동 삭제 (사용자가 다운로드할 시간 확보)
+                asyncio.create_task(cleanup_job_folder(job_id, delay_seconds=3600))
+        except Exception as e:
+            print(f"[BACKUP] Error backing up report: {e}")
+    else:
+        JOBS[job_id]["status"] = "ERROR"
+        err = JOBS[job_id].get("_stderr", b"")
+        JOBS[job_id]["error"] = (err or b"").decode(errors="ignore")
 
 @app.post("/run")
 async def run(request: Request):
