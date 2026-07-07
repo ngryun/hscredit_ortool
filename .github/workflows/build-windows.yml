@@ -6,6 +6,9 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write  # 태그 푸시 시 릴리스 생성/첨부에 필요
+
 jobs:
   build:
     runs-on: windows-latest
