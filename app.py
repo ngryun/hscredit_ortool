@@ -1,6 +1,8 @@
 # app.py  (Cloud Run 배포 버전)
 import asyncio, uuid, subprocess
 import csv
+import os
+import sys
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -20,10 +22,19 @@ warnings.filterwarnings(
 )
 
 app = FastAPI()
-BASE = Path("data"); BASE.mkdir(exist_ok=True, parents=True)
-REPORTS_DIR = Path("data/reports"); REPORTS_DIR.mkdir(exist_ok=True, parents=True)
+
+# Path anchoring: PyInstaller 실행(frozen)이면 exe 옆에 데이터 저장, 번들 리소스는 _MEIPASS에서 읽음.
+# 일반 실행이면 파일 위치 기준 (CWD가 달라도 동작).
+if getattr(sys, "frozen", False):
+    APP_DIR = Path(sys.executable).resolve().parent
+    RESOURCE_DIR = Path(getattr(sys, "_MEIPASS", APP_DIR))
+else:
+    APP_DIR = RESOURCE_DIR = Path(__file__).resolve().parent
+
+BASE = APP_DIR / "data"; BASE.mkdir(exist_ok=True, parents=True)
+REPORTS_DIR = BASE / "reports"; REPORTS_DIR.mkdir(exist_ok=True, parents=True)
 # Serve static assets (mascot video)
-app.mount("/asset", StaticFiles(directory="asset"), name="asset")
+app.mount("/asset", StaticFiles(directory=str(RESOURCE_DIR / "asset")), name="asset")
 
 from fastapi.responses import HTMLResponse
 
@@ -1640,6 +1651,27 @@ def index():
 # 아주 간단한 인메모리 상태 저장소 (서버 재시작 시 초기화되는 점만 유의)
 JOBS = {}  # job_id -> {"status": "PENDING|RUNNING|DONE|ERROR", "dir": Path, "error": str|None}
 
+
+def _default_workers() -> int:
+    """솔버 워커 수: SOLVER_WORKERS 환경변수 > 실제 할당된 CPU 수."""
+    env = os.environ.get("SOLVER_WORKERS")
+    if env:
+        try:
+            return max(1, int(env))
+        except ValueError:
+            pass
+    try:
+        return max(1, len(os.sched_getaffinity(0)))  # Linux/Cloud Run: cgroup 제한 반영
+    except AttributeError:
+        return max(1, os.cpu_count() or 1)  # macOS/Windows
+
+
+SOLVER_WORKERS = _default_workers()
+SOLVER_TIME_LIMIT = int(float(os.environ.get("SOLVER_TIME_LIMIT", "240")))
+# 동시 실행 1건: CP-SAT 하나가 코어를 전부 쓰는 게 품질에 유리. 초과분은 PENDING으로 대기.
+MAX_CONCURRENT_JOBS = int(os.environ.get("MAX_CONCURRENT_JOBS", "1"))
+RUN_SEM = asyncio.Semaphore(MAX_CONCURRENT_JOBS)
+
 def delete_file_safe(file_path: Path):
     """파일 안전 삭제"""
     try:
@@ -1671,13 +1703,25 @@ async def cleanup_job_folder(job_id: str, delay_seconds: int = 3600):
     except Exception as e:
         print(f"[AUTO-CLEANUP] Error deleting job {job_id}: {e}")
 
-async def run_optimizer(job_id: str, xlsx_path: Path, out_dir: Path,
+async def run_optimizer(job_id: str, *args, **kwargs):
+    """동시 실행을 MAX_CONCURRENT_JOBS로 제한. 대기 중인 작업은 PENDING 상태로 남는다."""
+    async with RUN_SEM:
+        await _run_optimizer_impl(job_id, *args, **kwargs)
+
+
+def _solver_command() -> list[str]:
+    """솔버 실행 명령 앞부분. frozen(PyInstaller)이면 자기 자신을 --solver 모드로 재실행."""
+    if getattr(sys, "frozen", False):
+        return [sys.executable, "--solver"]
+    return [sys.executable, str(RESOURCE_DIR / "optimize_student_sections.py")]
+
+
+async def _run_optimizer_impl(job_id: str, xlsx_path: Path, out_dir: Path,
                         slots: int, rooms: int, extra: int, cap: int, maxcap: int, group: str | None = None,
                         extra_total: int | None = None, constraints_csv_path: Path | None = None,
                         fixed_sections_csv_path: Path | None = None):
     JOBS[job_id]["status"] = "RUNNING"
-    cmd = [
-        "python", "optimize_student_sections.py",
+    cmd = _solver_command() + [
         "--input", str(xlsx_path),
         "--output-dir", str(out_dir),
         "--slots", str(slots),
@@ -1685,8 +1729,8 @@ async def run_optimizer(job_id: str, xlsx_path: Path, out_dir: Path,
         "--extra-rooms-per-slot", str(extra),
         "--cap", str(cap),
         "--maxcap", str(maxcap),
-        "--time-limit", "240",
-        "--workers", "8"  # 머신 코어/워커 수에 맞춰 조정
+        "--time-limit", str(SOLVER_TIME_LIMIT),
+        "--workers", str(SOLVER_WORKERS),
     ]
     if group:
         cmd += ["--group", str(group)]
@@ -1705,9 +1749,10 @@ async def run_optimizer(job_id: str, xlsx_path: Path, out_dir: Path,
             print(f"[DEBUG] fixed_sections_csv_path: {fixed_sections_csv_path} exists={fixed_sections_csv_path.exists()}")
     except Exception:
         pass
-    # 비동기 실행
+    # 비동기 실행 (PYTHONUTF8: Windows cp949 환경에서 한글 출력 깨짐 방지)
     proc = await asyncio.create_subprocess_exec(
-        *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+        env={**os.environ, "PYTHONUTF8": "1"},
     )
     # Stream stdout to capture progress
     async def read_stdout():

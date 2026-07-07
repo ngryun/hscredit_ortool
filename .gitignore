@@ -1,2 +1,10 @@
 /data
 !/data/reports/.gitkeep
+.venv/
+__pycache__/
+*.pyc
+build/
+dist/
+out/
+smoke_out/
+.DS_Store

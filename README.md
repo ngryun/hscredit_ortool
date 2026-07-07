@@ -59,6 +59,45 @@ uvicorn app:app --host 0.0.0.0 --port 8000
 - 최적화 진행 상황 실시간 표시
 - 결과 파일 다운로드 및 시각화된 배정 현황 확인
 
+### 3. 설치형 (내 컴퓨터에서 실행 — 권장)
+
+계산 품질은 CPU 성능에 좌우되므로, **본인 컴퓨터에서 직접 실행하는 것이 가장 빠르고 결과도 좋습니다.**
+학생 개인정보가 외부 서버로 전송되지 않는 장점도 있습니다.
+
+```bash
+python run_local.py
+```
+실행하면 로컬 서버가 시작되고 브라우저가 자동으로 열립니다.
+
+**Windows 실행파일**: GitHub Releases에서 `hscredit-local-windows.zip`을 내려받아 압축 해제 후
+`hscredit-local.exe`를 더블클릭하면 설치 없이 바로 사용할 수 있습니다.
+(처음 실행 시 Windows SmartScreen 경고가 뜨면 "추가 정보 → 실행"을 누르세요.)
+
+## 서버 배포 시 성능 설정 (Cloud Run)
+
+Cloud Run 기본 설정은 **HTTP 요청을 처리하는 동안에만 CPU를 할당**합니다.
+이 앱은 최적화를 백그라운드 프로세스로 실행하므로, 기본 설정에서는 폴링 요청이 오는 순간에만
+계산이 진행되어 같은 시간 제한이라도 결과 품질이 크게 나빠집니다. 배포 시 반드시 다음을 적용하세요:
+
+```bash
+gcloud run services update SERVICE_NAME \
+  --no-cpu-throttling \
+  --cpu 4 --memory 2Gi \
+  --timeout 300
+```
+
+- `--no-cpu-throttling`: 요청 사이에도 CPU를 유지 (핵심 설정)
+- `--cpu 4`: 솔버 워커 수는 할당된 CPU 수에 맞게 자동 감지됩니다
+- min-instances는 0을 권장 (상시 가동 시 비용 급증; 콜드스타트 몇 초는 감수)
+
+**환경변수** (선택):
+
+| 변수 | 기본값 | 설명 |
+|---|---|---|
+| `SOLVER_WORKERS` | 자동 감지 | 솔버 워커 스레드 수 |
+| `SOLVER_TIME_LIMIT` | 240 | 솔버 시간 제한(초) |
+| `MAX_CONCURRENT_JOBS` | 1 | 동시 최적화 실행 수 (초과분은 대기) |
+
 ### 과목별 정원 예외
 CSV(`caps.csv`) 형식:
 ```csv
