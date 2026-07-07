@@ -204,10 +204,12 @@ def _load_solver():
 
 ### Common Modifications
 
-**Changing concurrent execution limit** (app.py:28):
-```python
-MAX_CONCURRENT = 2  # Adjust this number
-```
+**Runtime configuration** (app.py, env vars):
+- `MAX_CONCURRENT_JOBS` (default 1): concurrent optimizations; excess jobs stay PENDING
+- `SOLVER_WORKERS` (default: auto-detected CPU count): CP-SAT worker threads
+- `SOLVER_TIME_LIMIT` (default 240): solver time limit in seconds
+
+**Local installable version**: `python run_local.py` starts uvicorn on 127.0.0.1 and opens a browser. PyInstaller builds (`hscredit.spec`, GitHub Actions `build-windows.yml`) produce a Windows onedir exe; the frozen exe re-executes itself with `--solver` to run the optimizer subprocess.
 
 **Adjusting objective weights** (optimize_student_sections.py):
 Look for weight constants `W1`, `W2`, `W3` in `build_and_solve()` function.

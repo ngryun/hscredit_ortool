@@ -1,0 +1,54 @@
+name: Build Windows installable
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build with PyInstaller
+        run: pyinstaller hscredit.spec
+
+      - name: Smoke test (solver mode)
+        shell: pwsh
+        run: |
+          python tools/make_sample_xlsx.py sample_students.xlsx
+          & "dist/hscredit-local/hscredit-local.exe" --solver `
+            --input sample_students.xlsx --output-dir smoke_out `
+            --slots 2 --rooms-per-slot 4 --cap 28 --maxcap 30 `
+            --time-limit 10 --workers 2
+          if (-not (Test-Path "smoke_out/assignments.csv")) {
+            Write-Error "smoke test failed: assignments.csv not produced"
+            exit 1
+          }
+          Get-Content smoke_out/report.txt
+
+      - name: Zip
+        shell: pwsh
+        run: Compress-Archive -Path dist/hscredit-local -DestinationPath hscredit-local-windows.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hscredit-local-windows
+          path: hscredit-local-windows.zip
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: hscredit-local-windows.zip
