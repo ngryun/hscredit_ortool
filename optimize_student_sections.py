@@ -44,6 +44,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Tuple, Optional, Iterable, Union
 import pandas as pd
 import warnings
+from solver_config import integer_setting, validate_solver_settings, validate_time_limit
 
 # Silence harmless openpyxl default style warning for some workbooks
 warnings.filterwarnings(
@@ -82,8 +83,10 @@ def load_caps_override(path: Optional[str]) -> Dict[str, Caps]:
     subs = {}
     for _, r in df.iterrows():
         subj = str(r[cols.get("subject", "subject")]).strip()
-        cap = int(r[cols.get("cap", "cap")])
-        maxcap = int(r[cols.get("maxcap", "maxcap")])
+        cap = integer_setting(r[cols.get("cap", "cap")], f"{subj} 정원", 1)
+        maxcap = integer_setting(r[cols.get("maxcap", "maxcap")], f"{subj} 최대 정원", 1)
+        if maxcap < cap:
+            raise ValueError(f"{subj}: 최대 정원은 정원 이상이어야 합니다.")
         subs[subj] = Caps(cap=cap, maxcap=maxcap)
     return subs
 
@@ -105,8 +108,8 @@ def load_subject_constraints_override(path: Optional[str]) -> Dict[str, SubjectC
         max_total = r.get(cols.get("max_total_sections", "max_total_sections"))
 
         # Handle NaN/empty values
-        max_per_slot = int(max_per_slot) if pd.notna(max_per_slot) and str(max_per_slot).strip() != "" else None
-        max_total = int(max_total) if pd.notna(max_total) and str(max_total).strip() != "" else None
+        max_per_slot = integer_setting(max_per_slot, f"{subj} 시간대별 최대 반 수") if pd.notna(max_per_slot) and str(max_per_slot).strip() != "" else None
+        max_total = integer_setting(max_total, f"{subj} 최대 반 수") if pd.notna(max_total) and str(max_total).strip() != "" else None
 
         subs[subj] = SubjectConstraints(
             max_sections_per_slot=max_per_slot,
@@ -131,7 +134,7 @@ def load_fixed_sections_csv(path: Optional[str]) -> Dict[str, int]:
         val = r[val_col]
         if pd.isna(val) or str(val).strip() == "":
             continue
-        subs[subj] = int(val)
+        subs[subj] = integer_setting(val, f"{subj} 지정 반 수")
     return subs
 
 
@@ -361,6 +364,19 @@ def build_and_solve(students: List[Dict],
         use_lexicographic: If True, use two-phase lexicographic optimization (legacy).
                           If False (default), use unified weighted objective (recommended).
     """
+    slots_g, rooms_per_slot, extra_rooms_per_slot, default_cap, default_maxcap, extra_total_limit = validate_solver_settings(
+        slots_g, rooms_per_slot, extra_rooms_per_slot, default_cap, default_maxcap, extra_total_limit
+    )
+    validate_time_limit(time_limit_s)
+    num_workers = integer_setting(num_workers, "솔버 워커 수")
+    if len(set(subjects_all)) != len(subjects_all):
+        raise ValueError("과목명이 중복되었습니다. 과목명을 구분해 주세요.")
+    subject_set = set(subjects_all)
+    for student in students:
+        choices = student["choices"]
+        if len(set(choices)) != len(choices) or not set(choices).issubset(subject_set):
+            raise ValueError("학생 선택 과목에 중복되거나 과목 목록에 없는 항목이 있습니다.")
+
     # Preserve original Excel column order from subjects_all
     demand = Counter()
     for s in students:
@@ -561,7 +577,7 @@ def build_and_solve(students: List[Dict],
 
         for s in S_idx:
             slot_upper = total_upper
-            if demand_t > 0:
+            if demand_t > 0 and fixed_total is None:
                 per_slot_load = math.ceil(demand_t / max(1, S))
                 slot_upper = min(slot_upper, per_slot_load + 1)
                 # Absolute maximum: if all students for this subject go to one slot
@@ -708,6 +724,7 @@ def build_and_solve(students: List[Dict],
             model.Minimize(sum_unassigned_expr)
             
             solver_phase1 = cp_model.CpSolver()
+            time_budget_phase1 = float("inf")
             if time_limit_s and time_limit_s > 0:
                 ratio = phase1_time_ratio if phase1_time_ratio is not None else 0.6
                 ratio = max(0.05, min(0.95, float(ratio)))
@@ -768,6 +785,8 @@ def build_and_solve(students: List[Dict],
             # Even if FEASIBLE, we lock in the best found value to prevent Phase2 from degrading it
             model.Add(sum_unassigned_expr == best_unassigned)
             model.ClearObjective()
+            for variable in [*a.values(), *uMiss.values(), *n.values(), *over.values(), *extra.values()]:
+                model.AddHint(variable, solver_phase1.Value(variable))
         
         # Phase 2: Minimize overflow and extra rooms
         obj_terms = []
@@ -776,6 +795,7 @@ def build_and_solve(students: List[Dict],
         model.Minimize(sum(obj_terms))
         
         solver = cp_model.CpSolver()
+        remaining = float("inf")
         if time_limit_s and time_limit_s > 0:
             remaining = max(1.0, float(time_limit_s) - phase1_time_used)
             solver.parameters.max_time_in_seconds = remaining
@@ -824,6 +844,16 @@ def build_and_solve(students: List[Dict],
         print(f"[INFO] Phase2 starting (time_remaining={remaining:.1f}s)")
         status = solver.Solve(model, callback)
         phase1_status_name = "LEXICOGRAPHIC_" + solver.StatusName(status)
+        if phase1_status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+            if status == cp_model.UNKNOWN:
+                # Phase 1 already found a valid assignment; retain it on timeout.
+                solver = solver_phase1
+                status = cp_model.FEASIBLE
+                phase1_status_name = "LEXICOGRAPHIC_PHASE1_FALLBACK"
+            elif status == cp_model.OPTIMAL and phase1_status != cp_model.OPTIMAL:
+                # Phase 2 proves only the secondary objective at the locked count.
+                status = cp_model.FEASIBLE
+                phase1_status_name = "LEXICOGRAPHIC_FEASIBLE"
         
     else:
         # ======================================================================
@@ -920,6 +950,13 @@ def build_and_solve(students: List[Dict],
     
     # Common: extract status string
     status_str = solver.StatusName(status)
+    if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+        explanations = {
+            cp_model.INFEASIBLE: "지정 반 수, 과목별 제한, 교실 수가 서로 충돌하는지 확인하세요.",
+            cp_model.UNKNOWN: "시간 내에 배정안을 찾지 못했습니다. 시간 제한을 늘리거나 제약조건을 조정하세요.",
+            cp_model.MODEL_INVALID: "최적화 모델의 입력값 또는 제약조건이 올바르지 않습니다.",
+        }
+        raise RuntimeError(f"최적화 실패 ({status_str}): {explanations.get(status, '배정안을 생성하지 못했습니다.')}")
 
     # Extract
     if S <= 0:
@@ -949,7 +986,7 @@ def build_and_solve(students: List[Dict],
                 slot_section_count[s] += nn
                 assigned_counts[(t,s)] = total_enrolled
     # Create sections plan DataFrame, sort by slot only (preserve subject order)
-    sections_plan_df = pd.DataFrame(sp_rows)
+    sections_plan_df = pd.DataFrame(sp_rows, columns=["subject", "slot", "num_sections", "total_enrolled"])
     if not sections_plan_df.empty:
         sections_plan_df = sections_plan_df.sort_values(["slot"]).reset_index(drop=True)
 
@@ -981,7 +1018,7 @@ def build_and_solve(students: List[Dict],
                     "section_label": None,
                     "status": "unassigned"
                 })
-    assignments_df = pd.DataFrame(assign_rows)
+    assignments_df = pd.DataFrame(assign_rows, columns=["student_id", "name", "subject", "slot", "section_label", "status"])
 
     # Post-assign students into concrete sections (1..n) for each (t,s)
     # Fill up to cap, then allow up to maxcap if solver used "over".

@@ -1,6 +1,7 @@
 # app.py  (Cloud Run 배포 버전)
 import asyncio, uuid, subprocess
 import csv
+import json
 import os
 import sys
 import shutil
@@ -10,6 +11,8 @@ from fastapi import FastAPI, UploadFile, Form, Request, BackgroundTasks
 from fastapi import Body
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.datastructures import UploadFile as FormUploadFile
+from solver_config import integer_setting, validate_solver_settings
 import pandas as pd
 import io
 import warnings
@@ -1561,8 +1564,10 @@ def index():
             statusNote.textContent = '대기열에 추가되었습니다. 처리 중...';
             if (pollTimer) clearInterval(pollTimer);
             pollTimer = setInterval(async () => {{
+              try {{
               const st = await fetch(`/jobs/${{data.job}}`);
               const js = await st.json();
+              if (!st.ok) throw new Error(st.status === 404 ? '작업이 만료되었거나 서버가 재시작되었습니다. 파일을 다시 업로드해 주세요.' : (js.error || '진행 상태를 불러오지 못했습니다.'));
               if (js.status === 'RUNNING') {{
                 setStatus('RUNNING');
                 if (mascot) mascot.classList.remove('hidden');
@@ -1634,6 +1639,17 @@ def index():
                 runStartMs = null; lastProgress = null;
                 statusNote.textContent = '대기 중...';
               }}
+              }} catch (err) {{
+                clearInterval(pollTimer);
+                if (tickTimer) {{ clearInterval(tickTimer); tickTimer = null; }}
+                runStartMs = null; lastProgress = null;
+                setStatus('ERROR', 'rose');
+                if (mascot) mascot.classList.add('hidden');
+                statusNote.textContent = '진행 상태를 확인하지 못했습니다.';
+                errBox.textContent = err.message || String(err);
+                errBox.classList.remove('hidden');
+                submitBtn.disabled = false;
+              }}
             }}, 2000);
           }} catch (err) {{
             setStatus('ERROR', 'rose');
@@ -1650,6 +1666,14 @@ def index():
 
 # 아주 간단한 인메모리 상태 저장소 (서버 재시작 시 초기화되는 점만 유의)
 JOBS = {}  # job_id -> {"status": "PENDING|RUNNING|DONE|ERROR", "dir": Path, "error": str|None}
+BACKGROUND_TASKS = set()
+
+
+def start_background_task(coroutine):
+    task = asyncio.create_task(coroutine)
+    BACKGROUND_TASKS.add(task)
+    task.add_done_callback(BACKGROUND_TASKS.discard)
+    return task
 
 
 def _default_workers() -> int:
@@ -1702,11 +1726,24 @@ async def cleanup_job_folder(job_id: str, delay_seconds: int = 3600):
                 print(f"[AUTO-CLEANUP] Deleted job directory after {delay_seconds}s: {job_dir}")
     except Exception as e:
         print(f"[AUTO-CLEANUP] Error deleting job {job_id}: {e}")
+    finally:
+        # Student names and choices are also cached in memory.
+        JOBS.pop(job_id, None)
 
 async def run_optimizer(job_id: str, *args, **kwargs):
     """동시 실행을 MAX_CONCURRENT_JOBS로 제한. 대기 중인 작업은 PENDING 상태로 남는다."""
-    async with RUN_SEM:
-        await _run_optimizer_impl(job_id, *args, **kwargs)
+    try:
+        async with RUN_SEM:
+            await _run_optimizer_impl(job_id, *args, **kwargs)
+    except asyncio.CancelledError:
+        JOBS[job_id].update(status="ERROR", error="작업이 취소되었습니다.")
+        raise
+    except Exception as exc:
+        JOBS[job_id].update(status="ERROR", error=f"최적화 실행 실패: {exc}")
+    finally:
+        # Clean up failed jobs too, independently of report archival success.
+        JOBS[job_id].pop("_stderr", None)
+        start_background_task(cleanup_job_folder(job_id))
 
 
 def _solver_command() -> list[str]:
@@ -1779,12 +1816,20 @@ async def _run_optimizer_impl(job_id: str, xlsx_path: Path, out_dir: Path,
                 line = await proc.stderr.readline()
                 if not line:
                     break
-                JOBS[job_id]["_stderr"] += line
+                JOBS[job_id]["_stderr"] = (JOBS[job_id]["_stderr"] + line)[-65536:]
         except Exception:
             pass
 
-    await asyncio.gather(read_stdout(), read_stderr())
-    await proc.wait()
+    try:
+        await asyncio.gather(read_stdout(), read_stderr())
+        await proc.wait()
+    finally:
+        if proc.returncode is None:
+            try:
+                proc.kill()
+            except ProcessLookupError:
+                pass
+            await proc.wait()
     if proc.returncode == 0:
         JOBS[job_id]["status"] = "DONE"
         # Build pivot for quick UI preview
@@ -1820,8 +1865,6 @@ async def _run_optimizer_impl(job_id: str, xlsx_path: Path, out_dir: Path,
                 report_dest = REPORTS_DIR / f"{timestamp}_{job_id}.txt"
                 shutil.copy2(report_src, report_dest)
                 print(f"[BACKUP] Report saved to: {report_dest}")
-                # 1시간 후 작업 폴더 자동 삭제 (사용자가 다운로드할 시간 확보)
-                asyncio.create_task(cleanup_job_folder(job_id, delay_seconds=3600))
         except Exception as e:
             print(f"[BACKUP] Error backing up report: {e}")
     else:
@@ -1829,104 +1872,98 @@ async def _run_optimizer_impl(job_id: str, xlsx_path: Path, out_dir: Path,
         err = JOBS[job_id].get("_stderr", b"")
         JOBS[job_id]["error"] = (err or b"").decode(errors="ignore")
 
+def parse_subject_settings(raw, label, *, fixed=False):
+    """Reject invalid settings before creating files or queuing an optimizer."""
+    if raw is None or raw == "":
+        return {}
+    try:
+        data = json.loads(raw)
+    except (ValueError, TypeError):
+        raise ValueError(f"{label}: 올바른 JSON 형식이 아닙니다.") from None
+    if not isinstance(data, dict):
+        raise ValueError(f"{label}: 과목별 객체 형식이어야 합니다.")
+    result = {}
+    for subject, value in data.items():
+        if not subject.strip():
+            raise ValueError(f"{label}: 과목명이 비어 있습니다.")
+        if fixed:
+            result[subject] = integer_setting(value, f"{subject} 지정 반 수")
+        else:
+            if not isinstance(value, dict):
+                raise ValueError(f"{subject}: 제약조건은 객체 형식이어야 합니다.")
+            if set(value) - {"maxPerSlot", "maxTotal"}:
+                raise ValueError(f"{subject}: 알 수 없는 제약조건 항목입니다.")
+            result[subject] = {
+                key: None if value.get(key) is None or value.get(key) == ""
+                else integer_setting(value[key], f"{subject} {label}")
+                for key in ("maxPerSlot", "maxTotal")
+            }
+    return result
+
+
 @app.post("/run")
 async def run(request: Request):
-    # Parse form data manually
-    form_data = await request.form()
-    print(f"[DEBUG] All form data keys: {list(form_data.keys())}")
-
-    xlsx = form_data.get("xlsx")
-    slots = int(form_data.get("slots", 4))
-    rooms = int(form_data.get("rooms", 7))
-    extra = int(form_data.get("extra", 1))
-    cap = int(form_data.get("cap", 28))
-    maxcap = int(form_data.get("maxcap", 30))
-    raw_group = form_data.get("group")
-    extra_total = form_data.get("extra_total")
-    constraints_json = form_data.get("constraints_json")
-    section_totals_json = form_data.get("section_totals_json")
-
-    print(f"[DEBUG] Received constraints_json: {constraints_json}")
-    job_id = str(uuid.uuid4())
-    job_dir = BASE / job_id; job_dir.mkdir(parents=True, exist_ok=True)
-    out_dir = job_dir / "out"; out_dir.mkdir(exist_ok=True)
-    xlsx_path = job_dir / "input.xlsx"
-    with open(xlsx_path, "wb") as f:
-        f.write(await xlsx.read())
-
-    group_values = []
-    try:
+    async with request.form() as form_data:
+        try:
+            xlsx = form_data.get("xlsx")
+            if not isinstance(xlsx, FormUploadFile) or not xlsx.filename:
+                raise ValueError("엑셀 파일을 선택하세요.")
+            if not xlsx.filename.lower().endswith(".xlsx"):
+                raise ValueError(".xlsx 형식의 엑셀 파일을 선택하세요.")
+            extra_total_raw = form_data.get("extra_total")
+            extra_total_raw = None if extra_total_raw is None or not str(extra_total_raw).strip() else extra_total_raw
+            slots, rooms, extra, cap, maxcap, extra_total = validate_solver_settings(
+                form_data.get("slots", 4), form_data.get("rooms", 7),
+                form_data.get("extra", 1), form_data.get("cap", 28),
+                form_data.get("maxcap", 30), extra_total_raw,
+            )
+            constraints_data = parse_subject_settings(form_data.get("constraints_json"), "과목별 제한")
+            section_data = parse_subject_settings(form_data.get("section_totals_json"), "지정 반 수", fixed=True)
+            for subject, total in section_data.items():
+                limits = constraints_data.get(subject, {})
+                if limits.get("maxTotal") is not None and total > limits["maxTotal"]:
+                    raise ValueError(f"{subject}: 지정 반 수가 최대 반 수를 초과합니다.")
+                if limits.get("maxPerSlot") is not None and total > limits["maxPerSlot"] * slots:
+                    raise ValueError(f"{subject}: 지정 반 수가 시간대별 최대 반 수와 충돌합니다.")
+            content = await xlsx.read()
+            if not content:
+                raise ValueError("업로드한 엑셀 파일이 비어 있습니다.")
+        except ValueError as exc:
+            return JSONResponse(status_code=422, content={"error": str(exc)})
         group_values = [str(g).strip() for g in form_data.getlist("group") if str(g).strip()]
-    except AttributeError:
-        group_values = []
-    if not group_values and raw_group:
-        gval = str(raw_group).strip()
-        if gval:
-            group_values = [gval]
     group = ",".join(group_values) if group_values else None
 
-    # Handle optional constraints from JSON
+    job_id = str(uuid.uuid4())
+    job_dir = BASE / job_id
+    out_dir = job_dir / "out"
+    xlsx_path = job_dir / "input.xlsx"
     constraints_csv_path = None
-    if constraints_json:
-        try:
-            import json
-            constraints_data = json.loads(constraints_json)
-            print(f"[DEBUG] Received constraints JSON: {constraints_json}")
-            print(f"[DEBUG] Parsed constraints data: {constraints_data}")
-
-            if constraints_data:
-                # Save constraints.csv under out_dir so it's downloadable via /download route
-                constraints_csv_path = out_dir / "constraints.csv"
-
-                # Convert JSON to CSV format (use csv.writer for proper newlines/quoting)
-                with open(constraints_csv_path, "w", encoding="utf-8", newline="") as f:
-                    writer = csv.writer(f)
-                    writer.writerow(["subject", "max_sections_per_slot", "max_total_sections"])
-                    for subject, constraint in constraints_data.items():
-                        max_per_slot = constraint.get("maxPerSlot")
-                        max_total = constraint.get("maxTotal")
-                        # Normalize None/empty to ''
-                        mps = "" if max_per_slot is None or str(max_per_slot).strip() == "" else int(max_per_slot)
-                        mt = "" if max_total is None or str(max_total).strip() == "" else int(max_total)
-                        writer.writerow([str(subject), mps, mt])
-                        print(f"[DEBUG] Added constraint: {subject} -> maxPerSlot={mps}, maxTotal={mt}")
-
-                print(f"[DEBUG] Created constraints CSV at: {constraints_csv_path}")
-        except Exception as e:
-            print(f"[DEBUG] Error parsing constraints: {e}")
-            pass  # Ignore constraint parsing errors
-
     fixed_sections_csv_path = None
-    if section_totals_json:
-        try:
-            import json
-            section_data = json.loads(section_totals_json)
-            if section_data:
-                fixed_sections_csv_path = out_dir / "fixed_sections.csv"
-                with open(fixed_sections_csv_path, "w", encoding="utf-8", newline="") as f:
-                    writer = csv.writer(f)
-                    writer.writerow(["subject", "total_sections"])
-                    for subject, total in section_data.items():
-                        try:
-                            val = int(total)
-                        except Exception:
-                            continue
-                        writer.writerow([str(subject), val])
-                print(f"[DEBUG] Created fixed sections CSV at: {fixed_sections_csv_path}")
-        except Exception as e:
-            print(f"[DEBUG] Error parsing section totals: {e}")
-            fixed_sections_csv_path = None
+    try:
+        out_dir.mkdir(parents=True)
+        xlsx_path.write_bytes(content)
+        if constraints_data:
+            constraints_csv_path = out_dir / "constraints.csv"
+            with constraints_csv_path.open("w", encoding="utf-8", newline="") as f:
+                writer = csv.writer(f)
+                writer.writerow(["subject", "max_sections_per_slot", "max_total_sections"])
+                for subject, constraint in constraints_data.items():
+                    writer.writerow([subject, constraint["maxPerSlot"], constraint["maxTotal"]])
+        if section_data:
+            fixed_sections_csv_path = out_dir / "fixed_sections.csv"
+            with fixed_sections_csv_path.open("w", encoding="utf-8", newline="") as f:
+                writer = csv.writer(f)
+                writer.writerow(["subject", "total_sections"])
+                writer.writerows(section_data.items())
+    except Exception:
+        delete_job_directory(job_dir)
+        return JSONResponse(status_code=500, content={"error": "작업 파일을 저장하지 못했습니다. 저장 공간과 폴더 권한을 확인하세요."})
 
     JOBS[job_id] = {"status": "PENDING", "dir": job_dir, "error": None}
-    # 백그라운드 태스크 시작 (즉시 응답)
-    et_val = None
-    try:
-        if extra_total is not None and str(extra_total).strip() != "":
-            et_val = int(str(extra_total).strip())
-    except Exception:
-        et_val = None
-    asyncio.create_task(run_optimizer(job_id, xlsx_path, out_dir, slots, rooms, extra, cap, maxcap, group, et_val, constraints_csv_path, fixed_sections_csv_path))
-
+    start_background_task(run_optimizer(
+        job_id, xlsx_path, out_dir, slots, rooms, extra, cap, maxcap,
+        group, extra_total, constraints_csv_path, fixed_sections_csv_path,
+    ))
     return {"job": job_id, "status_url": f"/jobs/{job_id}"}
 
 @app.get("/jobs/{job_id}")
@@ -1935,8 +1972,6 @@ def job_status(job_id: str):
     if not info:
         return JSONResponse(status_code=404, content={"error": "job not found"})
     resp = {"job": job_id, "status": info["status"]}
-    if info.get("progress"):
-        resp["progress"] = info["progress"]
     if info.get("progress"):
         resp["progress"] = info["progress"]
     if info.get("summary"):
@@ -2033,7 +2068,17 @@ def job_export(job_id: str, background_tasks: BackgroundTasks, payload: dict = B
 @app.get("/download/{job_id}/{name}")
 def download(job_id: str, name: str, background_tasks: BackgroundTasks):
     info = JOBS.get(job_id)
-    if not info: return JSONResponse(status_code=404, content={"error":"job not found"})
+    if not info:
+        # Anonymized reports remain available after personal data expires.
+        if name == "report.txt":
+            try:
+                canonical_id = str(uuid.UUID(job_id))
+                report = next(REPORTS_DIR.glob(f"*_{canonical_id}.txt"), None)
+                if report is not None:
+                    return FileResponse(report, filename="report.txt")
+            except ValueError:
+                pass
+        return JSONResponse(status_code=404, content={"error":"job not found"})
     path = info["dir"] / "out" / name
 
     # report.txt는 백업에서도 제공 가능
