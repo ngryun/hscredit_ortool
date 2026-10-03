@@ -13,6 +13,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.datastructures import UploadFile as FormUploadFile
 from solver_config import integer_setting, validate_solver_settings
+from student_workbook import read_student_workbook, read_assignments_csv, normalize_student_id
 import pandas as pd
 import io
 import warnings
@@ -43,16 +44,6 @@ from fastapi.responses import HTMLResponse
 
 # Slot label order for pivot sorting (output uses uppercase).
 SLOT_LABELS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-def normalize_student_id(val):
-    """Normalize student id to a consistent string (strip decimals, whitespace)."""
-    try:
-        return str(int(float(val)))
-    except Exception:
-        try:
-            return str(val).strip()
-        except Exception:
-            return ""
 
 def build_unassigned_lookup(df_asg: pd.DataFrame):
     """Return mapping: subject -> list of {{student_id, name, choices}} for unassigned students."""
@@ -95,7 +86,7 @@ def build_pivot(assignments_csv: Path):
     try:
         if not assignments_csv.exists():
             return None
-        df_all = pd.read_csv(assignments_csv)
+        df_all = read_assignments_csv(assignments_csv)
         if df_all.empty:
             return None
         # Normalize slot labels for consistent display/sorting (support old lowercase outputs too).
@@ -211,7 +202,7 @@ def build_export_xlsx(assignments_csv: Path, output_xlsx: Path, subject_order: l
     if not assignments_csv.exists():
         raise FileNotFoundError(str(assignments_csv))
 
-    df = pd.read_csv(assignments_csv)
+    df = read_assignments_csv(assignments_csv)
     if df.empty:
         raise ValueError("assignments.csv is empty")
 
@@ -1255,8 +1246,8 @@ def index():
           const fd = new FormData();
           fd.append('xlsx', file);
           const res = await fetch('/inspect', {{ method: 'POST', body: fd }});
-          if (!res.ok) return null;
           const js = await res.json();
+          if (!res.ok) throw new Error(js.error || '엑셀 파일을 읽지 못했습니다.');
           return js;
         }}
 
@@ -1270,6 +1261,8 @@ def index():
           groupRow.classList.add('hidden');
           applyGroupFilter([]);
           fixedSectionTargets = {{}};
+          lastInspect = null;
+          errBox.classList.add('hidden');
           subjectPreviewBody.innerHTML = '';
           subjectPreviewWrap.classList.add('hidden');
           if (!f) return;
@@ -1359,6 +1352,8 @@ def index():
             renderSubjectPreview(lastInspect);
           }} catch (err) {{
             console.warn('inspect error', err);
+            errBox.textContent = err.message || String(err);
+            errBox.classList.remove('hidden');
             inspectBody.innerHTML = '';
             inspectWrap.classList.add('hidden');
             subjectPreviewBody.innerHTML = '';
@@ -1611,6 +1606,7 @@ def index():
                   <a class=\"inline-flex items-center px-3 py-2 rounded-lg bg-sage-600 text-white hover:bg-sage-700\" href=\"${{js.sections}}\" download>sections_plan.csv</a>
                   <a class=\"inline-flex items-center px-3 py-2 rounded-lg bg-sage-600 text-white hover:bg-sage-700\" href=\"${{js.assignments}}\" download>assignments.csv</a>
                   <a class=\"inline-flex items-center px-3 py-2 rounded-lg bg-sage-600 text-white hover:bg-sage-700\" href=\"${{js.report}}\" download>report.txt</a>
+                  <a class=\"inline-flex items-center px-3 py-2 rounded-lg bg-sage-600 text-white hover:bg-sage-700\" href=\"${{js.filled_template}}\" download>원본 양식 결과.xlsx</a>
                   <button type=\"button\" class=\"export-btn inline-flex items-center px-3 py-2 rounded-lg bg-sage-600 text-white hover:bg-sage-700\" data-job=\"${{data.job}}\">배정결과.xlsx ⭐</button>
                   ${{js.constraints ? `<a class=\\\"inline-flex items-center px-3 py-2 rounded-lg bg-sage-600 text-white hover:bg-sage-700\\\" href=\\\"${{js.constraints}}\\\" download>constraints.csv</a>` : ''}}
                 `;
@@ -1838,7 +1834,7 @@ async def _run_optimizer_impl(job_id: str, xlsx_path: Path, out_dir: Path,
         # Compute simple summary metrics
         try:
             if assignments_csv.exists():
-                df_asg = pd.read_csv(assignments_csv)
+                df_asg = read_assignments_csv(assignments_csv)
                 total_unassigned = int((df_asg.get("status") == "unassigned").sum())
                 students_with_unassigned = int(df_asg[df_asg.get("status") == "unassigned"]["student_id"].nunique())
                 total_assigned = int((df_asg.get("status") == "assigned").sum())
@@ -1928,10 +1924,12 @@ async def run(request: Request):
             content = await xlsx.read()
             if not content:
                 raise ValueError("업로드한 엑셀 파일이 비어 있습니다.")
+            group_values = [str(g).strip() for g in form_data.getlist("group") if str(g).strip()]
+            group = ",".join(group_values) if group_values else None
+            # Validate the same workbook the child solver will read before queuing.
+            await asyncio.to_thread(read_student_workbook, io.BytesIO(content), target_group=group)
         except ValueError as exc:
             return JSONResponse(status_code=422, content={"error": str(exc)})
-        group_values = [str(g).strip() for g in form_data.getlist("group") if str(g).strip()]
-    group = ",".join(group_values) if group_values else None
 
     job_id = str(uuid.uuid4())
     job_dir = BASE / job_id
@@ -2019,7 +2017,7 @@ def job_unassigned(job_id: str, subject: str):
         if job_dir:
             assignments_path = Path(job_dir) / "out" / "assignments.csv"
             if assignments_path.exists():
-                df = pd.read_csv(assignments_path)
+                df = read_assignments_csv(assignments_path)
                 ua_map = build_unassigned_lookup(df)
                 students = ua_map.get(subject, [])
                 return {"subject": subject, "count": len(students), "students": students}
@@ -2116,140 +2114,14 @@ def download(job_id: str, name: str, background_tasks: BackgroundTasks):
 
 @app.post("/inspect")
 async def inspect(xlsx: UploadFile):
-    """Parse the uploaded Excel and return a preview with subject counts.
-    Subject names are normalized and disambiguated exactly like the solver,
-    so constraints set in the UI match the model's subject keys.
-    """
+    """Return the exact subject keys and counts that the optimizer will use."""
     try:
         content = await xlsx.read()
-
-        def norm(s):
-            return " ".join(str(s).split())
-
-        # Try original wide format first
-        try:
-            df = pd.read_excel(io.BytesIO(content), sheet_name=0)
-            df.columns = [str(c).strip() for c in df.columns]
-            looks_original = len(df.columns) >= 3 and (
-                any("학번" in c or c.lower() in {"id", "student_id"} for c in df.columns[:2]) or
-                any("이름" in c or c.lower() in {"name"} for c in df.columns[:2])
-            )
-        except Exception:
-            df = pd.DataFrame(); looks_original = False
-
-        if looks_original and not df.empty:
-            id_col = df.columns[0]
-            # Normalize subject column headers like the solver
-            subject_cols = [norm(c) for c in df.columns[2:]]
-            # Rename the dataframe columns so counts use normalized names
-            df = df.rename(columns={old: new for old, new in zip(df.columns[2:], subject_cols)})
-            # headcount = non-empty id rows
-            headcount = int(df[id_col].notna().sum())
-            # class_count from 5-digit student id: class = 3rd digit (index 2)
-            classes = set()
-            for v in df[id_col].dropna().astype(str):
-                s = "".join(ch for ch in str(v) if ch.isdigit())
-                if len(s) >= 3:
-                    classes.add(s[2])
-            subjects = []
-            for c in subject_cols:
-                col = df[c]
-                try:
-                    cnt = int((pd.to_numeric(col, errors='coerce').fillna(0.0) == 1).sum())
-                except Exception:
-                    cnt = int((col.astype(str).str.strip() == '1').sum())
-            subjects.append({"name": c, "count": cnt, "group": ""})
-            # Keep original Excel column order (no sorting)
-            return {"groups": [], "semesters": [], "subjects": subjects, "headcount": headcount, "class_count": len(classes)}
-
-        # New headered layout (with group/semester headers)
-        df0 = pd.read_excel(io.BytesIO(content), sheet_name=0, header=None)
-        if df0.shape[0] < 6 or df0.shape[1] < 5:
-            return {"groups": [], "semesters": [], "subjects": [], "headcount": 0, "class_count": 0}
-        COL_A, COL_B, COL_C, COL_E = 0, 1, 2, 4
-        ROW_SEM, ROW_GRP, ROW_SUBJ, ROW_DATA = 1, 2, 3, 5
-        sem_row = df0.iloc[ROW_SEM, COL_E:]
-        grp_row = df0.iloc[ROW_GRP, COL_E:]
-        subj_row = df0.iloc[ROW_SUBJ, COL_E:]
-
-        subjects_names = []  # normalized + uniquely tagged names (or None)
-        sems = []
-        grps = []
-        used = set()
-        for j, base in enumerate(subj_row):
-            if pd.isna(base):
-                subjects_names.append(None)
-                sems.append(None)
-                grps.append(None)
-                continue
-            base_s = norm(base)
-            if not base_s:
-                subjects_names.append(None)
-                sems.append(None)
-                grps.append(None)
-                continue
-            sem = sem_row.iloc[j] if j < len(sem_row) else None
-            grp = grp_row.iloc[j] if j < len(grp_row) else None
-            # forward-fill merged header cells
-            prev_sem = sems[-1] if sems else None
-            prev_grp = grps[-1] if grps else None
-            if (sem is None or (isinstance(sem, float) and pd.isna(sem)) or str(sem).strip() == ""):
-                sem = prev_sem
-            if (grp is None or (isinstance(grp, float) and pd.isna(grp)) or str(grp).strip() == ""):
-                grp = prev_grp
-            sem_s = str(sem).strip() if sem is not None and not pd.isna(sem) else ""
-            grp_s = str(grp).strip() if grp is not None and not pd.isna(grp) else ""
-            name = base_s
-            # Ensure uniqueness if duplicated subject names appear across groups/semesters
-            if name in used and (sem_s or grp_s):
-                tag = "-".join([p for p in [sem_s, grp_s] if p])
-                name = f"{base_s} [{tag}]"
-            k = 2
-            while name in used:
-                name = f"{base_s} ({k})"
-                k += 1
-            used.add(name)
-            subjects_names.append(name)
-            sems.append(sem_s)
-            grps.append(grp_s)
-
-        # counts aligned with columns E..end
-        subj_counts = []
-        for j, sname in enumerate(subjects_names):
-            if not sname:
-                continue
-            col = df0.iloc[ROW_DATA:, COL_E + j]
-            try:
-                cnt = int((pd.to_numeric(col, errors='coerce').fillna(0.0) == 1).sum())
-            except Exception:
-                cnt = int((col.astype(str).str.strip() == '1').sum())
-            group_val = grps[j] if j < len(grps) and grps[j] else ""
-            subj_counts.append({"name": sname, "count": cnt, "group": group_val})
-        # Keep original Excel column order (no sorting)
-
-        # headcount and class_count by student id across A/B/C
-        headcount = 0
-        classes = set()
-        for i in range(ROW_DATA, df0.shape[0]):
-            vals = []
-            for ci in (COL_C, COL_B, COL_A):
-                v = df0.iat[i, ci] if ci < df0.shape[1] else None
-                if v is None or (isinstance(v, float) and pd.isna(v)):
-                    continue
-                s = str(v).strip()
-                if s == '' or s == '0':
-                    continue
-                vals.append(s)
-            if vals:
-                headcount += 1
-                sid = vals[0]
-                sd = "".join(ch for ch in str(sid) if ch.isdigit())
-                if len(sd) >= 3:
-                    classes.add(sd[2])
-        uniq_groups = sorted({g for g in grps if g})
-        uniq_sems = sorted({s for s in sems if s})
-        return {"groups": uniq_groups, "semesters": uniq_sems, "subjects": subj_counts, "headcount": headcount, "class_count": len(classes)}
-    except Exception:
-        return {"groups": [], "semesters": [], "subjects": [], "headcount": 0, "class_count": 0}
+        parsed = await asyncio.to_thread(read_student_workbook, io.BytesIO(content))
+        return parsed.preview()
+    except ValueError as exc:
+        return JSONResponse(status_code=422, content={"error": str(exc)})
+    finally:
+        await xlsx.close()
 
 # 실행: uvicorn app:app --host 0.0.0.0 --port 8000
