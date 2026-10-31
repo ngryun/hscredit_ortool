@@ -101,6 +101,35 @@ gcloud run services update SERVICE_NAME \
 | `SOLVER_TIME_LIMIT` | 240 | 솔버 시간 제한(초) |
 | `MAX_CONCURRENT_JOBS` | 1 | 동시 최적화 실행 수 (초과분은 대기) |
 
+### GitHub 푸시 시 자동 배포
+
+`.github/workflows/deploy-cloud-run.yml`이 `main` 브랜치에 푸시될 때마다 테스트를 돌린 뒤
+Cloud Run에 자동 배포합니다 (Actions 탭에서 수동 실행도 가능). 위의 성능 설정은 워크플로에
+이미 포함되어 있습니다. 최초 1회만 아래 준비가 필요합니다.
+
+1. **GCP 프로젝트에서 API 활성화**
+   ```bash
+   gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
+   ```
+2. **배포용 서비스 계정 생성 및 권한 부여** (`PROJECT_ID`를 실제 값으로 바꾸세요)
+   ```bash
+   gcloud iam service-accounts create github-deployer --display-name "GitHub Actions deployer"
+   SA=github-deployer@PROJECT_ID.iam.gserviceaccount.com
+   for ROLE in roles/run.admin roles/cloudbuild.builds.editor roles/artifactregistry.writer roles/storage.admin roles/iam.serviceAccountUser; do
+     gcloud projects add-iam-policy-binding PROJECT_ID --member "serviceAccount:$SA" --role "$ROLE"
+   done
+   gcloud iam service-accounts keys create gcp-sa-key.json --iam-account "$SA"
+   ```
+3. **GitHub 저장소 설정** (Settings → Secrets and variables → Actions)
+   - Secret `GCP_PROJECT_ID`: GCP 프로젝트 ID
+   - Secret `GCP_SA_KEY`: 위에서 만든 `gcp-sa-key.json` 파일 내용 전체 (등록 후 로컬 파일은 삭제)
+   - Variable `CLOUD_RUN_REGION` (선택, 기본 `asia-northeast3` 서울)
+   - Variable `CLOUD_RUN_SERVICE` (선택, 기본 `hscredit`)
+4. `main`에 푸시하면 배포가 시작되고, 완료되면 Actions 로그 마지막에 서비스 URL이 표시됩니다.
+
+> 학생 이름·학번이 외부 서버를 거치게 되므로, 공개 배포 전에 학교의 개인정보 처리 방침에
+> 부합하는지 확인하세요. 내부용이라면 [설치형](#3-설치형-내-컴퓨터에서-실행--권장)을 권장합니다.
+
 ### 과목별 정원 예외
 CSV(`caps.csv`) 형식:
 ```csv

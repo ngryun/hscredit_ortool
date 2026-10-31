@@ -1,0 +1,72 @@
+name: Deploy to Cloud Run
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloud-run-deploy
+  cancel-in-progress: false
+
+env:
+  SERVICE: ${{ vars.CLOUD_RUN_SERVICE || 'hscredit' }}
+  REGION: ${{ vars.CLOUD_RUN_REGION || 'asia-northeast3' }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run tests
+        run: pytest -q tests/
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Deploy (build from Dockerfile)
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE }}
+          region: ${{ env.REGION }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          source: .
+          # README "서버 배포 시 성능 설정" 참고: 요청 사이에도 CPU를 유지해야 솔버 품질이 유지됨.
+          # 공개 웹앱이므로 누구나 접속 가능하게 설정 (로그인 없이 사용하는 서비스).
+          flags: >-
+            --allow-unauthenticated
+            --no-cpu-throttling
+            --cpu=4
+            --memory=2Gi
+            --timeout=300
+            --min-instances=0
+            --max-instances=2
+            --concurrency=20
+          env_vars: |
+            SOLVER_TIME_LIMIT=240
+            MAX_CONCURRENT_JOBS=1
+
+      - name: Show service URL
+        run: echo "Deployed to ${{ steps.deploy.outputs.url }}"

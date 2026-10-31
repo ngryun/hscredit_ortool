@@ -7,9 +7,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY app.py optimize_student_sections.py ./
+COPY app.py optimize_student_sections.py solver_config.py student_workbook.py ./
 COPY asset/ asset/
-COPY tests/ tests/
 
 # Create data directory
 RUN mkdir -p data/reports
