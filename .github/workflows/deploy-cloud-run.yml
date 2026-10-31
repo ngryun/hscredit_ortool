@@ -32,7 +32,8 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Run tests
-        run: pytest -q tests/
+        # python -m 으로 실행해야 저장소 루트가 sys.path에 들어가 app/optimize_student_sections를 import할 수 있음
+        run: python -m pytest -q tests/
 
   deploy:
     needs: test
