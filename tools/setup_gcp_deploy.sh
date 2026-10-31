@@ -67,9 +67,20 @@ if ! g iam workload-identity-pools providers describe "$PROVIDER" --location glo
     --project "$PROJECT_ID"
 fi
 WIF_PROVIDER="projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/$POOL/providers/$PROVIDER"
-g iam service-accounts add-iam-policy-binding "$SA_EMAIL" --project "$PROJECT_ID" \
-  --role roles/iam.workloadIdentityUser \
-  --member "principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/$POOL/attribute.repository/$GITHUB_REPO" >/dev/null
+# 방금 만든 서비스 계정은 IAM에 반영되기까지 수십 초 걸릴 수 있어 PERMISSION_DENIED가 나면 재시도
+for ATTEMPT in 1 2 3 4 5 6; do
+  if g iam service-accounts add-iam-policy-binding "$SA_EMAIL" --project "$PROJECT_ID" \
+       --role roles/iam.workloadIdentityUser \
+       --member "principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/$POOL/attribute.repository/$GITHUB_REPO" >/dev/null 2>&1; then
+    break
+  fi
+  if [ "$ATTEMPT" -eq 6 ]; then
+    echo "   서비스 계정 권한 연결에 계속 실패했습니다. 1분 뒤 스크립트를 다시 실행해 주세요." >&2
+    exit 1
+  fi
+  echo "   서비스 계정 반영 대기 중... ($ATTEMPT/5, 15초 후 재시도)"
+  sleep 15
+done
 echo "   공급자: $WIF_PROVIDER"
 
 echo "== 4/5 GitHub 저장소 변수 등록"
