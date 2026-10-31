@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write  # 키 파일 없이 GCP에 인증(Workload Identity)하기 위해 필요
 
 concurrency:
   group: cloud-run-deploy
@@ -41,10 +42,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # tools/setup_gcp_deploy.sh 가 아래 변수들을 등록함 (비밀값 아님, 키 파일 불필요)
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SA }}
 
       - name: Deploy (build from Dockerfile)
         id: deploy
@@ -52,7 +55,7 @@ jobs:
         with:
           service: ${{ env.SERVICE }}
           region: ${{ env.REGION }}
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          project_id: ${{ vars.GCP_PROJECT_ID }}
           source: .
           # README "서버 배포 시 성능 설정" 참고: 요청 사이에도 CPU를 유지해야 솔버 품질이 유지됨.
           # 공개 웹앱이므로 누구나 접속 가능하게 설정 (로그인 없이 사용하는 서비스).
